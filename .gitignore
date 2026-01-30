@@ -1,0 +1,9 @@
+### common
+.DS_Store
+*.tar.gz
+.gitversion
+/.idea
+~$*.xlsx
+~$*.xls
+.cursor
+

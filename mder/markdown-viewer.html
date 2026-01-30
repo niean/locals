@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MD文件渲染工具</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1'/%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='12' fill='url(%23grad)'/%3E%3Cpath d='M30 25 L30 75 L70 75 L70 40 L55 40 L55 25 Z' fill='white' opacity='0.9'/%3E%3Cpath d='M55 25 L70 40 L55 40 Z' fill='white' opacity='0.7'/%3E%3Cpath d='M35 45 L65 45 M35 55 L65 55 M35 65 L50 65' stroke='%23667eea' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+    <script src="lib/marked.min.js"></script>
+    <script src="lib/highlight.min.js"></script>
+    <link rel="stylesheet" href="lib/github.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        body.drag-over {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 40px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content {
+            flex: 1;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .toggle-input-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .toggle-input-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .input-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            transition: all 0.4s ease;
+            overflow: hidden;
+        }
+
+        .input-section.collapsed {
+            max-height: 0;
+            padding: 0 30px;
+            border-bottom: none;
+            opacity: 0;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-wrapper input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .input-wrapper input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #667eea;
+            color: white;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: white;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .drop-zone:hover {
+            background: #f8f9ff;
+            border-color: #764ba2;
+        }
+
+        .drop-zone.dragover {
+            background: #e7ebff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .drop-zone-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .drop-zone-text {
+            font-size: 18px;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone-hint {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .output-section {
+            padding: 30px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .markdown-content {
+            flex: 1;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .output-header h2 {
+            color: #495057;
+            font-size: 1.5em;
+            word-break: break-all;
+        }
+
+        .file-info {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .markdown-content {
+            line-height: 1.8;
+            color: #212529;
+        }
+
+        .markdown-content h1,
+        .markdown-content h2,
+        .markdown-content h3,
+        .markdown-content h4,
+        .markdown-content h5,
+        .markdown-content h6 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+            color: #212529;
+        }
+
+        .markdown-content h1 {
+            font-size: 2em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+        }
+
+        .markdown-content h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 0.3em;
+        }
+
+        .markdown-content h3 {
+            font-size: 1.25em;
+        }
+
+        .markdown-content p {
+            margin-bottom: 16px;
+        }
+
+        .markdown-content ul,
+        .markdown-content ol {
+            margin-bottom: 16px;
+            padding-left: 2em;
+        }
+
+        .markdown-content li {
+            margin-bottom: 0.25em;
+        }
+
+        .markdown-content blockquote {
+            padding: 0 1em;
+            color: #6a737d;
+            border-left: 0.25em solid #dfe2e5;
+            margin-bottom: 16px;
+        }
+
+        .markdown-content code {
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: rgba(27, 31, 35, 0.05);
+            border-radius: 3px;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        .markdown-content pre {
+            padding: 16px;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        .markdown-content pre code {
+            display: inline;
+            padding: 0;
+            margin: 0;
+            overflow: visible;
+            line-height: inherit;
+            word-wrap: normal;
+            background-color: transparent;
+            border: 0;
+        }
+
+        .markdown-content table {
+            border-spacing: 0;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+
+        .markdown-content table th,
+        .markdown-content table td {
+            padding: 6px 13px;
+            border: 1px solid #dfe2e5;
+        }
+
+        .markdown-content table th {
+            font-weight: 600;
+            background-color: #f6f8fa;
+        }
+
+        .markdown-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 16px 0;
+        }
+
+        .markdown-content a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+
+        .markdown-content a:hover {
+            text-decoration: underline;
+        }
+
+        .markdown-content hr {
+            height: 0.25em;
+            padding: 0;
+            margin: 24px 0;
+            background-color: #e1e4e8;
+            border: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 18px;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .input-wrapper {
+                flex-direction: column;
+            }
+
+            .output-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>📝 MD文件渲染工具</h1>
+            </div>
+            <button class="toggle-input-btn" id="toggleInputBtn" onclick="toggleInputSection()">
+                📁 打开文件选择
+            </button>
+        </div>
+
+        <div class="input-section" id="inputSection">
+            <div class="input-group">
+                <label for="filePath">方式一：输入文件路径（支持本地路径或 URL）</label>
+                <div class="input-wrapper">
+                    <input type="text" id="filePath" placeholder="输入文件路径，例如：/path/to/file.md 或 https://example.com/file.md">
+                    <button class="btn" onclick="loadFromPath()">加载</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>方式二：选择或拖拽文件</label>
+                <div class="drop-zone" id="dropZone" ondragover="handleDragOver(event)" 
+                     ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" onclick="document.getElementById('fileInput').click()">
+                    <div class="drop-zone-icon">📄</div>
+                    <div class="drop-zone-text">拖拽 Markdown 文件到这里</div>
+                    <div class="drop-zone-hint">或点击选择文件</div>
+                </div>
+                <input type="file" id="fileInput" accept=".md,.markdown,.txt" onchange="handleFileSelect(event)">
+            </div>
+        </div>
+
+        <div class="output-section">
+            <div class="output-header">
+                <h2 id="outputTitle">渲染结果</h2>
+                <div class="file-info" id="fileInfo"></div>
+            </div>
+            <div id="errorContainer"></div>
+            <div id="markdownOutput" class="markdown-content">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📄</div>
+                    <div class="empty-state-text">请选择或拖拽一个 Markdown 文件开始</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 配置 marked
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    try {
+                        return hljs.highlight(code, { language: lang }).value;
+                    } catch (err) {}
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+
+        // 显示错误信息
+        function showError(message) {
+            const errorContainer = document.getElementById('errorContainer');
+            errorContainer.innerHTML = `<div class="error-message">❌ ${message}</div>`;
+        }
+
+        // 清除错误信息
+        function clearError() {
+            document.getElementById('errorContainer').innerHTML = '';
+        }
+
+        // 切换输入区域显示/隐藏
+        function toggleInputSection() {
+            const inputSection = document.getElementById('inputSection');
+            const toggleBtn = document.getElementById('toggleInputBtn');
+            
+            if (inputSection.classList.contains('collapsed')) {
+                inputSection.classList.remove('collapsed');
+                toggleBtn.textContent = '📁 打开文件选择';
+            } else {
+                inputSection.classList.add('collapsed');
+                toggleBtn.textContent = '📁 选择文件';
+            }
+        }
+
+        // 渲染 Markdown
+        function renderMarkdown(content, fileName) {
+            try {
+                clearError();
+                const html = marked.parse(content);
+                document.getElementById('markdownOutput').innerHTML = html;
+                
+                // 更新文件信息
+                if (fileName) {
+                    document.getElementById('fileInfo').textContent = `文件：${fileName}`;
+                    document.getElementById('outputTitle').textContent = fileName;
+                } else {
+                    document.getElementById('fileInfo').textContent = '';
+                    document.getElementById('outputTitle').textContent = '渲染结果';
+                }
+                
+                // 渲染后自动折叠输入区域
+                const inputSection = document.getElementById('inputSection');
+                if (!inputSection.classList.contains('collapsed')) {
+                    inputSection.classList.add('collapsed');
+                    document.getElementById('toggleInputBtn').textContent = '📁 选择文件';
+                }
+            } catch (error) {
+                showError('渲染 Markdown 时出错：' + error.message);
+            }
+        }
+
+        // 读取文件内容
+        function readFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                renderMarkdown(e.target.result, file.name);
+            };
+            reader.onerror = function() {
+                showError('读取文件失败');
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        // 方式一：从路径加载
+        async function loadFromPath() {
+            const path = document.getElementById('filePath').value.trim();
+            if (!path) {
+                showError('请输入文件路径');
+                return;
+            }
+
+            // 如果是 URL
+            if (path.startsWith('http://') || path.startsWith('https://')) {
+                try {
+                    const response = await fetch(path);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    const content = await response.text();
+                    renderMarkdown(content, path);
+                } catch (error) {
+                    showError('加载 URL 失败：' + error.message);
+                }
+                return;
+            }
+
+            // 如果是本地路径，尝试使用 File System Access API
+            if ('showOpenFilePicker' in window) {
+                try {
+                    const [fileHandle] = await window.showOpenFilePicker({
+                        types: [{
+                            description: 'Markdown files',
+                            accept: { 'text/markdown': ['.md', '.markdown'] }
+                        }]
+                    });
+                    const file = await fileHandle.getFile();
+                    readFile(file);
+                    document.getElementById('filePath').value = file.name;
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        showError('无法访问文件系统。请使用文件选择器或拖拽方式。');
+                    }
+                }
+            } else {
+                // 降级方案：提示用户使用文件选择器
+                showError('浏览器不支持直接访问本地文件路径。请使用文件选择器或拖拽方式。');
+                document.getElementById('fileInput').click();
+            }
+        }
+
+        // 方式二：文件选择
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (!file.name.match(/\.(md|markdown|txt)$/i)) {
+                    showError('请选择 Markdown 文件（.md, .markdown, .txt）');
+                    return;
+                }
+                readFile(file);
+                document.getElementById('filePath').value = file.name;
+            }
+        }
+
+        // 方式三：拖拽处理
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.classList.remove('dragover');
+            document.body.classList.remove('drag-over');
+
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (!file.name.match(/\.(md|markdown|txt)$/i)) {
+                    showError('请拖拽 Markdown 文件（.md, .markdown, .txt）');
+                    return;
+                }
+                readFile(file);
+                document.getElementById('filePath').value = file.name;
+            }
+        }
+
+        // 全局拖拽支持（即使输入区域折叠也能拖拽）
+        document.addEventListener('dragover', function(event) {
+            event.preventDefault();
+            if (event.dataTransfer.types.includes('Files')) {
+                document.body.classList.add('drag-over');
+            }
+        });
+
+        document.addEventListener('dragleave', function(event) {
+            event.preventDefault();
+            if (!event.relatedTarget || !document.body.contains(event.relatedTarget)) {
+                document.body.classList.remove('drag-over');
+            }
+        });
+
+        document.addEventListener('drop', function(event) {
+            event.preventDefault();
+            document.body.classList.remove('drag-over');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.match(/\.(md|markdown|txt)$/i)) {
+                    readFile(file);
+                    document.getElementById('filePath').value = file.name;
+                }
+            }
+        });
+
+        // 支持回车键加载
+        document.getElementById('filePath').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                loadFromPath();
+            }
+        });
+    </script>
+</body>
+</html>

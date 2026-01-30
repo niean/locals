@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Crect x='2' y='2' width='12' height='12' rx='2' fill='%23333'/%3E%3Crect x='5' y='5' width='6' height='6' fill='white'/%3E%3C/svg%3E" type="image/svg+xml">
+    <title>iframe渲染工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+        }
+        body {
+            padding: 10px;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            height: calc(100vh - 20px);
+        }
+        .editor, .preview {
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .editor {
+            width: 15%;
+            min-width: 200px;
+        }
+        .preview {
+            flex: 1;
+            min-width: 200px;
+        }
+        .title {
+            padding: 8px 12px;
+            background: #333;
+            color: white;
+            font-size: 14px;
+        }
+        #code-input {
+            flex: 1;
+            width: 100%;
+            border: none;
+            padding: 10px;
+            resize: none;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        #code-input:focus {
+            outline: none;
+        }
+        #preview-area {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+            background: #f9f9f9; /* 预览区域背景设为浅灰 */
+        }
+        #render-result {
+            width: 100%;
+            height: 100%;
+            border: 1px dashed #ccc;
+            overflow: auto;
+            background: #ffffff; /* 渲染容器设为白色 */
+        }
+        .error {
+            color: #dc3545;
+            padding: 8px;
+            font-size: 13px;
+            background: #f8d7da;
+            display: none;
+        }
+        .resizer {
+            width: 6px;
+            height: 100%;
+            background: #e0e0e0;
+            cursor: col-resize;
+            user-select: none;
+            border-left: 1px solid #ccc;
+            border-right: 1px solid #ccc;
+        }
+        .resizer:hover {
+            background: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="editor">
+            <div class="title">iframe代码</div>
+            <textarea id="code-input" placeholder='示例: <iframe src="https://example.com" width="100%" height="100%"></iframe>'></textarea>
+            <div class="error" id="error"></div>
+        </div>
+
+        <div class="resizer" id="resizer"></div>
+
+        <div class="preview">
+            <div class="title">渲染预览</div>
+            <div id="preview-area">
+                <div id="render-result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const codeInput = document.getElementById('code-input');
+        const renderResult = document.getElementById('render-result');
+        const errorEl = document.getElementById('error');
+        const resizer = document.getElementById('resizer');
+        const editor = document.querySelector('.editor');
+        const container = document.querySelector('.container');
+
+        function render() {
+            const code = codeInput.value.trim();
+            errorEl.style.display = 'none';
+            renderResult.innerHTML = '';
+
+            if (!code) return;
+
+            try {
+                const temp = document.createElement('div');
+                temp.innerHTML = code;
+                const iframe = temp.querySelector('iframe');
+                
+                if (!iframe) {
+                    throw new Error('请输入有效的 iframe 标签');
+                }
+
+                // 确保iframe背景与容器协调
+                if (!iframe.style.backgroundColor) {
+                    iframe.style.backgroundColor = 'transparent';
+                }
+                if (!iframe.style.height) iframe.height = '100%';
+                if (!iframe.style.width) iframe.width = '100%';
+
+                renderResult.appendChild(iframe);
+                
+                iframe.onerror = () => {
+                    throw new Error('加载失败（可能存在跨域限制）');
+                };
+            } catch (err) {
+                errorEl.textContent = err.message;
+                errorEl.style.display = 'block';
+            }
+        }
+
+        function initResizer() {
+            let startX, startWidth;
+
+            resizer.addEventListener('mousedown', (e) => {
+                startX = e.pageX;
+                startWidth = editor.offsetWidth;
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResize);
+                resizer.style.background = '#aaa';
+            });
+
+            function resize(e) {
+                const width = startWidth + (e.pageX - startX);
+                if (width >= 200 && (container.offsetWidth - width) >= 200) {
+                    editor.style.width = `${width}px`;
+                }
+            }
+
+            function stopResize() {
+                document.removeEventListener('mousemove', resize);
+                document.removeEventListener('mouseup', stopResize);
+                resizer.style.background = '#e0e0e0';
+            }
+        }
+
+        codeInput.addEventListener('input', render);
+        window.addEventListener('load', () => {
+            render();
+            initResizer();
+        });
+    </script>
+</body>
+</html>
