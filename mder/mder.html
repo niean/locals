@@ -23,9 +23,6 @@
             position: relative;
         }
 
-        body.drag-over {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        }
 
         .container {
             max-width: 1400px;
@@ -80,122 +77,6 @@
             border-color: rgba(255, 255, 255, 0.5);
         }
 
-        .input-section {
-            padding: 30px;
-            background: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
-            transition: all 0.4s ease;
-            overflow: hidden;
-        }
-
-        .input-section.collapsed {
-            max-height: 0;
-            padding: 0 30px;
-            border-bottom: none;
-            opacity: 0;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #495057;
-        }
-
-        .input-wrapper {
-            display: flex;
-            gap: 10px;
-        }
-
-        .input-wrapper input[type="text"] {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .input-wrapper input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: #667eea;
-            color: white;
-        }
-
-        .btn:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        .drop-zone {
-            border: 3px dashed #667eea;
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            background: white;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .drop-zone:hover {
-            background: #f8f9ff;
-            border-color: #764ba2;
-        }
-
-        .drop-zone.dragover {
-            background: #e7ebff;
-            border-color: #764ba2;
-            transform: scale(1.02);
-        }
-
-        .drop-zone-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        .drop-zone-text {
-            font-size: 18px;
-            color: #495057;
-            margin-bottom: 10px;
-        }
-
-        .drop-zone-hint {
-            font-size: 14px;
-            color: #6c757d;
-        }
 
         .output-section {
             padding: 30px;
@@ -392,10 +273,6 @@
                 font-size: 1.5em;
             }
 
-            .input-wrapper {
-                flex-direction: column;
-            }
-
             .output-header {
                 flex-direction: column;
                 align-items: flex-start;
@@ -410,31 +287,12 @@
             <div class="header-content">
                 <h1>📝 MD文件渲染工具</h1>
             </div>
-            <button class="toggle-input-btn" id="toggleInputBtn" onclick="toggleInputSection()">
-                📁 打开文件选择
+            <button class="toggle-input-btn" id="openFileBtn" onclick="document.getElementById('fileInput').click()">
+                📁 打开文件
             </button>
         </div>
 
-        <div class="input-section" id="inputSection">
-            <div class="input-group">
-                <label for="filePath">方式一：输入文件路径（支持本地路径或 URL）</label>
-                <div class="input-wrapper">
-                    <input type="text" id="filePath" placeholder="输入文件路径，例如：/path/to/file.md 或 https://example.com/file.md">
-                    <button class="btn" onclick="loadFromPath()">加载</button>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label>方式二：选择或拖拽文件</label>
-                <div class="drop-zone" id="dropZone" ondragover="handleDragOver(event)" 
-                     ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" onclick="document.getElementById('fileInput').click()">
-                    <div class="drop-zone-icon">📄</div>
-                    <div class="drop-zone-text">拖拽 Markdown 文件到这里</div>
-                    <div class="drop-zone-hint">或点击选择文件</div>
-                </div>
-                <input type="file" id="fileInput" accept=".md,.markdown,.txt" onchange="handleFileSelect(event)">
-            </div>
-        </div>
+        <input type="file" id="fileInput" accept=".md,.markdown,.txt" onchange="handleFileSelect(event)" style="display: none;">
 
         <div class="output-section">
             <div class="output-header">
@@ -445,7 +303,7 @@
             <div id="markdownOutput" class="markdown-content">
                 <div class="empty-state">
                     <div class="empty-state-icon">📄</div>
-                    <div class="empty-state-text">请选择或拖拽一个 Markdown 文件开始</div>
+                    <div class="empty-state-text">请点击右上角的"打开文件"按钮选择 Markdown 文件</div>
                 </div>
             </div>
         </div>
@@ -477,19 +335,6 @@
             document.getElementById('errorContainer').innerHTML = '';
         }
 
-        // 切换输入区域显示/隐藏
-        function toggleInputSection() {
-            const inputSection = document.getElementById('inputSection');
-            const toggleBtn = document.getElementById('toggleInputBtn');
-            
-            if (inputSection.classList.contains('collapsed')) {
-                inputSection.classList.remove('collapsed');
-                toggleBtn.textContent = '📁 打开文件选择';
-            } else {
-                inputSection.classList.add('collapsed');
-                toggleBtn.textContent = '📁 选择文件';
-            }
-        }
 
         // 渲染 Markdown
         function renderMarkdown(content, fileName) {
@@ -507,12 +352,6 @@
                     document.getElementById('outputTitle').textContent = '渲染结果';
                 }
                 
-                // 渲染后自动折叠输入区域
-                const inputSection = document.getElementById('inputSection');
-                if (!inputSection.classList.contains('collapsed')) {
-                    inputSection.classList.add('collapsed');
-                    document.getElementById('toggleInputBtn').textContent = '📁 选择文件';
-                }
             } catch (error) {
                 showError('渲染 Markdown 时出错：' + error.message);
             }
@@ -530,54 +369,7 @@
             reader.readAsText(file, 'UTF-8');
         }
 
-        // 方式一：从路径加载
-        async function loadFromPath() {
-            const path = document.getElementById('filePath').value.trim();
-            if (!path) {
-                showError('请输入文件路径');
-                return;
-            }
-
-            // 如果是 URL
-            if (path.startsWith('http://') || path.startsWith('https://')) {
-                try {
-                    const response = await fetch(path);
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    const content = await response.text();
-                    renderMarkdown(content, path);
-                } catch (error) {
-                    showError('加载 URL 失败：' + error.message);
-                }
-                return;
-            }
-
-            // 如果是本地路径，尝试使用 File System Access API
-            if ('showOpenFilePicker' in window) {
-                try {
-                    const [fileHandle] = await window.showOpenFilePicker({
-                        types: [{
-                            description: 'Markdown files',
-                            accept: { 'text/markdown': ['.md', '.markdown'] }
-                        }]
-                    });
-                    const file = await fileHandle.getFile();
-                    readFile(file);
-                    document.getElementById('filePath').value = file.name;
-                } catch (error) {
-                    if (error.name !== 'AbortError') {
-                        showError('无法访问文件系统。请使用文件选择器或拖拽方式。');
-                    }
-                }
-            } else {
-                // 降级方案：提示用户使用文件选择器
-                showError('浏览器不支持直接访问本地文件路径。请使用文件选择器或拖拽方式。');
-                document.getElementById('fileInput').click();
-            }
-        }
-
-        // 方式二：文件选择
+        // 文件选择
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
@@ -586,76 +378,10 @@
                     return;
                 }
                 readFile(file);
-                document.getElementById('filePath').value = file.name;
             }
         }
 
-        // 方式三：拖拽处理
-        function handleDragOver(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            event.currentTarget.classList.add('dragover');
-        }
 
-        function handleDragLeave(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            event.currentTarget.classList.remove('dragover');
-        }
-
-        function handleDrop(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            event.currentTarget.classList.remove('dragover');
-            document.body.classList.remove('drag-over');
-
-            const files = event.dataTransfer.files;
-            if (files.length > 0) {
-                const file = files[0];
-                if (!file.name.match(/\.(md|markdown|txt)$/i)) {
-                    showError('请拖拽 Markdown 文件（.md, .markdown, .txt）');
-                    return;
-                }
-                readFile(file);
-                document.getElementById('filePath').value = file.name;
-            }
-        }
-
-        // 全局拖拽支持（即使输入区域折叠也能拖拽）
-        document.addEventListener('dragover', function(event) {
-            event.preventDefault();
-            if (event.dataTransfer.types.includes('Files')) {
-                document.body.classList.add('drag-over');
-            }
-        });
-
-        document.addEventListener('dragleave', function(event) {
-            event.preventDefault();
-            if (!event.relatedTarget || !document.body.contains(event.relatedTarget)) {
-                document.body.classList.remove('drag-over');
-            }
-        });
-
-        document.addEventListener('drop', function(event) {
-            event.preventDefault();
-            document.body.classList.remove('drag-over');
-            
-            const files = event.dataTransfer.files;
-            if (files.length > 0) {
-                const file = files[0];
-                if (file.name.match(/\.(md|markdown|txt)$/i)) {
-                    readFile(file);
-                    document.getElementById('filePath').value = file.name;
-                }
-            }
-        });
-
-        // 支持回车键加载
-        document.getElementById('filePath').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                loadFromPath();
-            }
-        });
     </script>
 </body>
 </html>
