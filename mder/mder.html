@@ -108,6 +108,10 @@
         .file-info {
             color: #6c757d;
             font-size: 14px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: right;
         }
 
         .markdown-content {
@@ -287,18 +291,19 @@
             <div class="header-content">
                 <h1>📝 MD文件渲染工具</h1>
             </div>
-            <button class="toggle-input-btn" id="openFileBtn" onclick="document.getElementById('fileInput').click()">
+            <div style="display: flex; gap: 10px;">
+                <button class="toggle-input-btn" id="reloadFileBtn" onclick="reloadFile()" style="display: none;">
+                    🔄 重新加载
+                </button>
+            <button class="toggle-input-btn" id="openFileBtn" onclick="openFileWithAPI()">
                 📁 打开文件
             </button>
+            </div>
         </div>
 
         <input type="file" id="fileInput" accept=".md,.markdown,.txt" onchange="handleFileSelect(event)" style="display: none;">
 
         <div class="output-section">
-            <div class="output-header">
-                <h2 id="outputTitle">渲染结果</h2>
-                <div class="file-info" id="fileInfo"></div>
-            </div>
             <div id="errorContainer"></div>
             <div id="markdownOutput" class="markdown-content">
                 <div class="empty-state">
@@ -306,6 +311,7 @@
                     <div class="empty-state-text">请点击右上角的"打开文件"按钮选择 Markdown 文件</div>
                 </div>
             </div>
+            <div class="file-info" id="fileInfo"></div>
         </div>
     </div>
 
@@ -324,6 +330,11 @@
             gfm: true
         });
 
+        // 保存当前文件的句柄和路径信息
+        let currentFileHandle = null;
+        let currentFilePath = null;
+        let currentFileName = null;
+
         // 显示错误信息
         function showError(message) {
             const errorContainer = document.getElementById('errorContainer');
@@ -335,21 +346,78 @@
             document.getElementById('errorContainer').innerHTML = '';
         }
 
+        // 显示/隐藏重新加载按钮
+        function toggleReloadButton(show) {
+            const reloadBtn = document.getElementById('reloadFileBtn');
+            if (reloadBtn) {
+                reloadBtn.style.display = show ? 'block' : 'none';
+            }
+        }
+
 
         // 渲染 Markdown
-        function renderMarkdown(content, fileName) {
+        function renderMarkdown(content, filePath, fileName, fileHandle = null, lastModified = null) {
             try {
                 clearError();
                 const html = marked.parse(content);
                 document.getElementById('markdownOutput').innerHTML = html;
                 
-                // 更新文件信息
-                if (fileName) {
-                    document.getElementById('fileInfo').textContent = `文件：${fileName}`;
-                    document.getElementById('outputTitle').textContent = fileName;
+                // 保存文件句柄和路径信息，用于重新加载
+                currentFileHandle = fileHandle;
+                currentFilePath = filePath;
+                currentFileName = fileName;
+                
+                // 更新文件信息（包含文件路径、行数、字节数、更新时间）
+                const fileInfoEl = document.getElementById('fileInfo');
+                const outputTitleEl = document.getElementById('outputTitle');
+                
+                if (filePath && content) {
+                    // 计算行数
+                    const lineCount = content.split('\n').length;
+                    
+                    // 计算字节数（UTF-8编码）
+                    const byteCount = new TextEncoder().encode(content).length;
+                    
+                    // 格式化字节数显示
+                    const formatBytes = (bytes) => {
+                        if (bytes < 1024) return bytes + ' B';
+                        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+                        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+                    };
+                    
+                    // 格式化更新时间显示
+                    const formatDate = (timestamp) => {
+                        if (!timestamp) return '未知';
+                        const date = new Date(timestamp);
+                        
+                        return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + 
+                               date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                    };
+                    
+                    // 使用文件路径，如果没有则使用文件名
+                    const displayPath = filePath || fileName || '未知文件';
+                    const displayName = fileName || filePath.split(/[/\\]/).pop() || '未知文件';
+                    const updateTime = formatDate(lastModified);
+                    
+                    if (fileInfoEl) {
+                        fileInfoEl.textContent = `文件：${displayPath} | 行数：${lineCount} | 大小：${formatBytes(byteCount)} | 时间：${updateTime}`;
+                    }
+                    if (outputTitleEl) {
+                        outputTitleEl.textContent = displayName;
+                    }
+                    
+                    // 显示重新加载按钮
+                    toggleReloadButton(true);
                 } else {
-                    document.getElementById('fileInfo').textContent = '';
-                    document.getElementById('outputTitle').textContent = '渲染结果';
+                    if (fileInfoEl) {
+                        fileInfoEl.textContent = '';
+                    }
+                    if (outputTitleEl) {
+                        outputTitleEl.textContent = '渲染结果';
+                    }
+                    
+                    // 隐藏重新加载按钮
+                    toggleReloadButton(false);
                 }
                 
             } catch (error) {
@@ -358,10 +426,16 @@
         }
 
         // 读取文件内容
-        function readFile(file) {
+        function readFile(file, fileHandle = null) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                renderMarkdown(e.target.result, file.name);
+                const content = e.target.result;
+                // 尝试获取完整文件路径（浏览器安全限制，可能无法获取）
+                // 优先使用 file.path，其次是 webkitRelativePath，最后是文件名
+                const filePath = file.path || file.webkitRelativePath || file.name;
+                // 获取文件的最后修改时间
+                const lastModified = file.lastModified || null;
+                renderMarkdown(content, filePath, file.name, fileHandle, lastModified);
             };
             reader.onerror = function() {
                 showError('读取文件失败');
@@ -369,7 +443,104 @@
             reader.readAsText(file, 'UTF-8');
         }
 
-        // 文件选择
+        // 重新加载文件
+        async function reloadFile() {
+            if (!currentFileHandle && !currentFilePath) {
+                showError('没有可重新加载的文件');
+                return;
+            }
+
+            try {
+                // 如果保存了文件句柄（File System Access API），直接使用它重新读取
+                if (currentFileHandle) {
+                    const file = await currentFileHandle.getFile();
+                    readFile(file, currentFileHandle);
+                    return;
+                }
+
+                // 如果有文件路径，尝试通过 File System Access API 重新打开
+                if (currentFilePath && window.showOpenFilePicker) {
+                    try {
+                        const [handle] = await window.showOpenFilePicker({
+                            types: [{
+                                description: 'Markdown 文件',
+                                accept: { 
+                                    'text/markdown': ['.md', '.markdown'],
+                                    'text/plain': ['.txt']
+                                }
+                            }],
+                            excludeAcceptAllOption: false,
+                            multiple: false
+                        });
+
+                        const file = await handle.getFile();
+                        readFile(file, handle);
+                        return;
+                    } catch (e) {
+                        if (e.name !== 'AbortError') {
+                            throw e;
+                        }
+                        return; // 用户取消
+                    }
+                }
+
+                // 如果都不行，尝试通过 fetch 重新加载（如果文件在可访问的位置）
+                if (currentFilePath) {
+                    try {
+                        const response = await fetch(currentFilePath);
+                        if (response.ok) {
+                            const content = await response.text();
+                            // 尝试从响应头获取最后修改时间
+                            const lastModifiedHeader = response.headers.get('Last-Modified');
+                            const lastModified = lastModifiedHeader ? new Date(lastModifiedHeader).getTime() : null;
+                            renderMarkdown(content, currentFilePath, currentFileName, null, lastModified);
+                            return;
+                        }
+                    } catch (e) {
+                        // fetch 失败，继续尝试其他方式
+                    }
+                }
+
+                // 最后尝试：提示用户重新选择文件
+                showError('无法自动重新加载文件，请使用"打开文件"按钮重新选择文件');
+                
+            } catch (error) {
+                showError('重新加载文件失败: ' + error.message);
+            }
+        }
+
+        // 使用 File System Access API 打开文件
+        async function openFileWithAPI() {
+            if (!window.showOpenFilePicker) {
+                console.log('不支持 File System Access API，回退到传统方式');
+                document.getElementById('fileInput').click();
+                return;
+            }
+
+            try {
+                const [fileHandle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'Markdown 文件',
+                        accept: { 
+                            'text/markdown': ['.md', '.markdown'],
+                            'text/plain': ['.txt']
+                        }
+                    }],
+                    excludeAcceptAllOption: false,
+                    multiple: false
+                });
+
+                const file = await fileHandle.getFile();
+                readFile(file, fileHandle);
+            } catch (e) {
+                if (e.name !== 'AbortError') {
+                    console.error('打开文件失败:', e);
+                    showError('打开文件失败: ' + e.message);
+                }
+            }
+        }
+
+        // 文件选择（通过 input file）
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
