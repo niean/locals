@@ -1,0 +1,31 @@
+.c-canvas-area {
+  position: relative;
+}
+
+.c-canvas-area__canvas {
+  display: block;
+  cursor: crosshair;
+}
+
+.c-canvas-area__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.c-canvas-area__placeholder {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  pointer-events: none;
+}
+
+.c-canvas-area__placeholder svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.4;
+}

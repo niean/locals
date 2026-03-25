@@ -1,0 +1,21 @@
+.o-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.o-app__body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.o-app__main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-canvas-bg);
+  position: relative;
+  overflow: hidden;
+}
