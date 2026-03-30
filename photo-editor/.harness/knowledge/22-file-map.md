@@ -14,7 +14,6 @@
 | css/components/_property-bar.css | 顶部属性栏组件 |
 | css/components/_canvas.css | 画布区域组件 |
 | css/components/_modal.css | Toast 提示组件 |
-| css/components/_crop-actions.css | 裁剪工具确认/取消按钮浮动层样式 |
 | css/tools/_mixins.css | 预留: 通用可复用 CSS 片段 |
 | css/utilities/_utilities.css | 工具类（u-hidden, u-visually-hidden） |
 | js/main.js | 应用入口，模块组装、事件绑定 |

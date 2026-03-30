@@ -17,38 +17,41 @@ class CropTool extends BaseTool {
   constructor() {
     super('crop');
     this.isDragging = false;
+    this.isMoving = false;
     this.startX = 0;
     this.startY = 0;
+    this.moveOffsetX = 0;
+    this.moveOffsetY = 0;
     this.cropRect = null;
-    this.actionButtons = null;
-    this.isDraggingButtons = false;
-    this.dragOffset = { x: 0, y: 0 };
-    this._dragHandlers = null;
     this._boundOnDblClick = this._onDblClick.bind(this);
+    this._boundOnKeyDown = this._onKeyDown.bind(this);
   }
 
   onActivate() {
     this.cropRect = null;
     canvas.getOverlayCanvas().addEventListener('dblclick', this._boundOnDblClick);
+    document.addEventListener('keydown', this._boundOnKeyDown);
   }
 
   onDeactivate() {
     this.cropRect = null;
-    this._removeActionButtons();
     canvas.getOverlayCanvas().removeEventListener('dblclick', this._boundOnDblClick);
+    document.removeEventListener('keydown', this._boundOnKeyDown);
     canvas.clearOverlay();
   }
 
   onMouseDown(e) {
     const p = this.getCanvasPoint(e);
-    // 点击选区内不移除按钮（支持双击确认）
+    // 选区内点击启动移动
     if (this.cropRect) {
       const { x, y, w, h } = this.cropRect;
       if (p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h) {
+        this.isMoving = true;
+        this.moveOffsetX = p.x - x;
+        this.moveOffsetY = p.y - y;
         return;
       }
     }
-    this._removeActionButtons();
     this.isDragging = true;
     this.startX = p.x;
     this.startY = p.y;
@@ -56,18 +59,30 @@ class CropTool extends BaseTool {
   }
 
   onMouseMove(e) {
-    if (!this.isDragging) return;
     const p = this.getCanvasPoint(e);
+    if (this.isMoving && this.cropRect) {
+      const { w, h } = this.cropRect;
+      const cw = state.get('canvasWidth');
+      const ch = state.get('canvasHeight');
+      this.cropRect.x = Math.round(Math.max(0, Math.min(p.x - this.moveOffsetX, cw - w)));
+      this.cropRect.y = Math.round(Math.max(0, Math.min(p.y - this.moveOffsetY, ch - h)));
+      this._drawCropOverlay();
+      return;
+    }
+    if (!this.isDragging) return;
     this.cropRect = this._calcRect(this.startX, this.startY, p.x, p.y);
     this._drawCropOverlay();
   }
 
   onMouseUp() {
+    if (this.isMoving) {
+      this.isMoving = false;
+      return;
+    }
     if (!this.isDragging) return;
     this.isDragging = false;
     if (this.cropRect && this.cropRect.w > 5 && this.cropRect.h > 5) {
       this._drawCropOverlay();
-      this._createActionButtons();
     }
   }
 
@@ -147,142 +162,12 @@ class CropTool extends BaseTool {
     }
   }
 
-  _createActionButtons() {
-    if (this.actionButtons) return;
-
-    const container = document.createElement('div');
-    container.className = 'c-crop-actions';
-
-    const confirmBtn = document.createElement('button');
-    confirmBtn.className = 'c-crop-actions__btn c-crop-actions__btn--confirm';
-    confirmBtn.textContent = '确认';
-    confirmBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this._applyCrop();
-      this._removeActionButtons();
-    });
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'c-crop-actions__btn c-crop-actions__btn--cancel';
-    cancelBtn.textContent = '取消';
-    cancelBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
+  _onKeyDown(e) {
+    if (e.key === 'Escape' && this.cropRect) {
       this.cropRect = null;
+      this.isMoving = false;
       canvas.clearOverlay();
-      this._removeActionButtons();
-    });
-
-    container.appendChild(confirmBtn);
-    container.appendChild(cancelBtn);
-
-    const canvasArea = canvas.getCanvasArea();
-    canvasArea.appendChild(container);
-
-    this.actionButtons = container;
-    this._setupDragBehavior();
-    this._positionActionButtons();
-  }
-
-  _positionActionButtons() {
-    if (!this.actionButtons || !this.cropRect) return;
-
-    const { x, y, w, h } = this.cropRect;
-    const btnH = 32;
-    const gap = 8;
-
-    let btnX = x + w - 136;
-    let btnY = y + h + gap;
-
-    const canvasW = state.get('canvasWidth');
-    const canvasH = state.get('canvasHeight');
-
-    // 底部溢出 -> 上移
-    if (btnY + btnH > canvasH) {
-      btnY = y - btnH - gap;
     }
-
-    // 顶部也溢出 -> 内嵌
-    if (btnY < 0) {
-      btnY = y + h - btnH - 4;
-    }
-
-    // 左边界溢出
-    if (btnX < 0) {
-      btnX = 0;
-    }
-
-    // 右边界溢出
-    const btnW = 136;
-    if (btnX + btnW > canvasW) {
-      btnX = canvasW - btnW;
-    }
-
-    this.actionButtons.style.left = `${btnX}px`;
-    this.actionButtons.style.top = `${btnY}px`;
-  }
-
-  _setupDragBehavior() {
-    if (!this.actionButtons) return;
-
-    const onMouseDown = (e) => {
-      if (e.target.tagName === 'BUTTON') return;
-
-      this.isDraggingButtons = true;
-      this.actionButtons.classList.add('is-dragging');
-      const rect = this.actionButtons.getBoundingClientRect();
-      this.dragOffset = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
-      e.preventDefault();
-    };
-
-    const onMouseMove = (e) => {
-      if (!this.isDraggingButtons) return;
-
-      const canvasArea = canvas.getCanvasArea();
-      const areaRect = canvasArea.getBoundingClientRect();
-      const btnRect = this.actionButtons.getBoundingClientRect();
-
-      let newX = e.clientX - areaRect.left - this.dragOffset.x;
-      let newY = e.clientY - areaRect.top - this.dragOffset.y;
-
-      // 边界限制
-      newX = Math.max(0, Math.min(newX, areaRect.width - btnRect.width));
-      newY = Math.max(0, Math.min(newY, areaRect.height - btnRect.height));
-
-      this.actionButtons.style.left = `${newX}px`;
-      this.actionButtons.style.top = `${newY}px`;
-    };
-
-    const onMouseUp = () => {
-      if (this.isDraggingButtons) {
-        this.isDraggingButtons = false;
-        this.actionButtons.classList.remove('is-dragging');
-      }
-    };
-
-    this.actionButtons.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-
-    this._dragHandlers = { onMouseDown, onMouseMove, onMouseUp };
-  }
-
-  _removeActionButtons() {
-    if (this._dragHandlers) {
-      this.actionButtons.removeEventListener('mousedown', this._dragHandlers.onMouseDown);
-      document.removeEventListener('mousemove', this._dragHandlers.onMouseMove);
-      document.removeEventListener('mouseup', this._dragHandlers.onMouseUp);
-      this._dragHandlers = null;
-    }
-
-    if (this.actionButtons) {
-      this.actionButtons.remove();
-      this.actionButtons = null;
-    }
-
-    this.isDraggingButtons = false;
   }
 
   _onDblClick(e) {
@@ -291,7 +176,6 @@ class CropTool extends BaseTool {
     const { x, y, w, h } = this.cropRect;
     if (p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h) {
       this._applyCrop();
-      this._removeActionButtons();
     }
   }
 

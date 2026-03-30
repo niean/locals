@@ -29,6 +29,7 @@ function init() {
   setupFileHandling();
   setupKeyboard();
   setupUndoRedoButtons();
+  setupRotateButton();
 
   // 默认激活裁剪工具
   switchTool('crop');
@@ -120,6 +121,7 @@ function setupFileHandling() {
       updateUndoRedoButtons();
       document.getElementById('btnDownload').disabled = false;
       document.getElementById('downloadFormat').disabled = false;
+      document.getElementById('btnRotate').disabled = false;
     } catch (err) {
       showToast(err.message);
     }
@@ -173,6 +175,13 @@ function setupUndoRedoButtons() {
   document.getElementById('btnUndo').addEventListener('click', handleUndo);
   document.getElementById('btnRedo').addEventListener('click', handleRedo);
   history.onChange(updateUndoRedoButtons);
+}
+
+function setupRotateButton() {
+  document.getElementById('btnRotate').addEventListener('click', () => {
+    canvas.rotateImage();
+    updateUndoRedoButtons();
+  });
 }
 
 function updateUndoRedoButtons() {

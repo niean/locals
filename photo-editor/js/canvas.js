@@ -87,6 +87,39 @@ function restoreFromImageData(imageData) {
   mainCtx.putImageData(imageData, 0, 0);
 }
 
+function rotateImage() {
+  if (!mainCanvas) return;
+
+  const w = mainCanvas.width;
+  const h = mainCanvas.height;
+  const imageData = mainCtx.getImageData(0, 0, w, h);
+
+  // 创建临时画布存储原图
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = w;
+  tempCanvas.height = h;
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCtx.putImageData(imageData, 0, 0);
+
+  // 旋转后宽高互换
+  mainCanvas.width = h;
+  mainCanvas.height = w;
+  overlayCanvas.width = h;
+  overlayCanvas.height = w;
+
+  state.set('canvasWidth', h);
+  state.set('canvasHeight', w);
+
+  // 逆时针旋转 90 度
+  mainCtx.save();
+  mainCtx.translate(0, w);
+  mainCtx.rotate(-Math.PI / 2);
+  mainCtx.drawImage(tempCanvas, 0, 0);
+  mainCtx.restore();
+
+  history.push();
+}
+
 export {
   init,
   loadImage,
@@ -97,4 +130,5 @@ export {
   clearOverlay,
   restoreFromImageData,
   getCanvasArea,
+  rotateImage,
 };

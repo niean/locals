@@ -66,3 +66,41 @@
 .c-property-bar__select:disabled {
   opacity: 0.3;
 }
+
+.c-property-bar__size-dot {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.c-property-bar__size-dot:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.c-property-bar__size-dot.is-active {
+  background-color: var(--color-primary);
+}
+
+.c-property-bar__size-dot.is-active:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.c-property-bar__size-dot__circle {
+  border-radius: 50%;
+  background-color: var(--color-text);
+}
+
+.c-property-bar__size-dot.is-active .c-property-bar__size-dot__circle {
+  background-color: #fff;
+}
+
+.c-property-bar__divider {
+  width: 1px;
+  height: 20px;
+  background-color: var(--color-border);
+}

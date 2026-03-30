@@ -67,13 +67,31 @@ class MosaicTool extends BaseTool {
   }
 
   renderPropertyBar(container) {
-    const size = state.getToolOption('mosaic', 'size');
+    const currentSize = state.getToolOption('mosaic', 'size');
+    const sizeOptions = [
+      { value: 1, dot: 4 },
+      { value: 2, dot: 6 },
+      { value: 5, dot: 10 },
+      { value: 10, dot: 14 },
+    ];
+    const buttons = sizeOptions.map((opt) => {
+      const active = opt.value === currentSize ? ' is-active' : '';
+      return `<button class="c-property-bar__size-dot${active}" data-size="${opt.value}" title="${opt.value}">
+        <span class="c-property-bar__size-dot__circle" style="width:${opt.dot}px;height:${opt.dot}px"></span>
+      </button>`;
+    }).join('');
     container.innerHTML = `
       <label class="c-property-bar__label">块大小</label>
-      <input type="number" id="mosaicSize" value="${size}" min="3" max="50">
+      ${buttons}
     `;
-    container.querySelector('#mosaicSize').addEventListener('change', (e) => {
-      state.setToolOption('mosaic', 'size', parseInt(e.target.value, 10));
+    container.querySelectorAll('.c-property-bar__size-dot').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const val = parseInt(btn.dataset.size, 10);
+        state.setToolOption('mosaic', 'size', val);
+        container.querySelectorAll('.c-property-bar__size-dot').forEach((b) => {
+          b.classList.toggle('is-active', b === btn);
+        });
+      });
     });
   }
 }
