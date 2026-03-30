@@ -7,7 +7,7 @@ description: 人工指令触发代码治理
 
 触发：人工指令。对项目代码进行完整质量治理。
 
-本 Skill 采用多 Agent 编排，每个 Phase 指定执行角色。Phase 间通过"检查点摘要"（不超过 10 行）交接上下文。
+本 Skill 采用多 Agent 编排，每个 Phase 指定执行角色。Phase 间通过"检查点摘要"（按 AGENTS.md 检查点摘要模板，不超过 5 行）交接上下文。
 
 ---
 
@@ -16,7 +16,7 @@ description: 人工指令触发代码治理
 - 读取 AGENTS.md 中的代码生成、质量守护、安全规范，启动 Phase 2
 
 ## Phase 2: 扫描
-- Agent: Reviewer（subagent 并行）
+- Agent: Reviewer（subagent 并行）；可传入 model 参数指定扫描 subagent 使用的 LLM 模型
 - 通过 `use_subagents` 启动扫描，读取 `.harness/skills/subskills/` 对应模板作为 prompt。无 subagent 能力时主 Agent 顺序执行
 - 第一批扫描维度：{{SCAN_DIMENSIONS_LIST}}
 - 第二批：废弃代码（scan-dead-code.md）
@@ -27,7 +27,7 @@ description: 人工指令触发代码治理
 ## Phase 3: 汇总与确认
 - Agent: Orchestrator
 - 合并结果，按严重程度排序（安全 > 架构 > 其它）
-- 通过 ask_followup_question 向用户展示违规清单，等待确认
+- 通过 `AskUserQuestion` 向用户展示违规清单，等待确认
 
 ## Phase 4: 修复
 - Agent: Orchestrator（主 Agent 直接修复）
@@ -37,13 +37,10 @@ description: 人工指令触发代码治理
 检查点：`[Phase 4 修复] 修复N项, 删除M个废弃项, 更新file-map: 是/否`
 
 ## Phase 5: 验证
-- Agent: Reviewer
+- Agent: Reviewer；沿用 Phase 2 传入的 model 参数
 
 ### Step 5a: 构建验证（主 Agent）
-```bash
-{{BUILD_COMMAND}}
-```
-零警告。失败回 Phase 4。
+执行 `Skill: 验证构建`（`.harness/skills/verify-build.md`），确认零警告零错误。失败回 Phase 4。
 
 ### Step 5b: 回归扫描（可选，修复涉及面广时）
 对修复涉及的文件重新执行 Phase 2 中相关维度的扫描，确认无新增违规或残留问题。无 subagent 时主 Agent 顺序执行。

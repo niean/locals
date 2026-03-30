@@ -21,6 +21,10 @@ description: Reviewer 或治理代码时扫描{{DIMENSION_NAME}}
 
 {{CHECK_RULES}}
 
+## 已知例外（不视为违规）
+
+{{KNOWN_EXCEPTIONS}}
+
 ## 输出格式
 
 ```

@@ -6,13 +6,68 @@ PhotoEditor -- 本地化图片编辑器，纯 HTML+CSS+JS 实现。由于使用 
 
 # 一、通用规范（项目无关）
 
+## 流程合规
+
+### 任务执行入口（AI-READONLY）
+
+任务开始时首先进行 任务分类和Skill路由（新 Task 或同一 Task 内的第 2+ 次迭代均需分类），必须立即执行以下步骤，禁止跳过：
+
+1. 任务分类：判断任务类型。优先匹配：用户明确指定已注册 Skill 名称（如"治理代码"等）时，直接路由到对应 Skill，跳过步骤 2-3。否则：功能需求或修改代码 -> `Skill: 迭代功能`，Bug修复或异常行为修复 -> `Skill: 修复Bug`，修改文档需求 -> `Skill: 迭代Harness文档`，其它任务按需路由到已注册 Skill 或直接执行
+2. 读取 Skill 定义：立即读取对应的 Skill 文件（如 `.harness/skills/iterate-feature.md`）
+3. 遵循 Skill 流程：按 Skill 文件定义的 Phase 顺序执行；特别强调，`[GATE]` 标记的 Phase 必须在消息框展示意图、等待人工确认，否则禁止执行后续 Phase
+
+执行约束：
+- 必须先读取 Skill 定义，再开始代码实现
+- 必须按 Skill 文件定义的 Phase 顺序完整执行，不跳过、不简化、不改编、不拆分、不合并
+- 必须遵守 `[GATE]` 门禁（见下方 GATE 规则），在 GATE 点等待用户确认后再继续
+- 必须按 Phase 定义的消息输出格式输出，不简化、不改动
+- superpowers 插件（形如 `superpowers:skill-x`）仅在用户明确指令时调用，不主动调起
+
+
+### Phase 门禁（GATE）规则（AI-READONLY）
+
+- `[GATE]` 标记的 Phase 结束后，必须立即结束当前回复，使用 `AskUserQuestion` 工具向用户请求确认；禁止在同一条回复中继续后续 Phase
+- `[GATE]` Phase 收到用户修正时：更新内容后必须重新输出完整摘要并重走 GATE 确认流程；用户修正 ≠ 用户确认，禁止将修正视为确认直接进入后续 Phase
+- `[GATE-ENTRY]` 标记的 Phase 开始前，必须执行前置条件检查：(1) 上一条用户消息包含明确确认（如"确认""Yes""ok""继续"等），(2) 前置 GATE Phase 不在当前回复中输出。任一条件不满足则停止并提示用户
+- 当前 GATE 点：迭代功能 Phase 2 -> Phase 3, 迭代Harness文档 Phase 2 -> Phase 3
+- 非 GATE Phase 禁止使用 `AskUserQuestion` 等待用户确认后再继续后续 Phase；AI 应按 Skill 定义自主推进流程
+
+
+### 受保护章节规则（AI-READONLY）
+
+- 标记为 `AI-READONLY` 的章节，AI 发现其内容存在问题时只能以消息方式提示用户；AI 不得自动修改，也不得索要用户确认后代为修改（防止误授权）
+
+### 消息输出格式（AI-READONLY）
+
+任务开始时声明类型和架构，每个 Phase 使用标题 + 角色标注 + 正文的三行结构。格式如下：
+
+```
+任务类型：功能需求；调度架构：多Agent
+
+## Phase 1: 任务调度
+[Agent: Orchestrator]
+正文内容...
+
+## Phase 4: 代码审查
+[Agent: Reviewer (subagent)]
+正文内容...
+```
+
+- 同一 Task 内第 2+ 次迭代，声明追加：`同一 Task 内第 N 次迭代`
+- Phase 名称严格对齐 Skill 定义
+- 约束类术语（"硬性门禁""流程违规"等）不输出到用户消息框
+
+
 ## Agents（角色 Agent）
 
 Skill 定义"做什么"，Agent 定义"谁来做"。多 Agent Skill 的每个 Phase 指定执行角色，Phase 间通过"检查点摘要"（不超过 10 行）交接上下文。详细定义见 `.harness/agents/` 目录。
 
 | Agent | 运行形态 | 模板文件 | 职责 |
 |-------|---------|---------|------|
-| Orchestrator | 主 Agent | .harness/agents/orchestrator.md | 任务路由、流程编排、上下文管理、代码实现 |
+| Orchestrator | 主 Agent | .harness/agents/orchestrator.md | 任务路由、流程编排、上下文管理 |
+| Designer | 主 Agent | .harness/agents/designer.md | 需求探索、方案设计、spec 产出 |
+| Planner | 主 Agent | .harness/agents/planner.md | 计划拆分、plan 产出 |
+| Coder | subagent + 主 Agent | .harness/agents/coder.md | 代码实现 |
 | Reviewer | subagent + 主 Agent | .harness/agents/reviewer.md | 代码扫描、构建验证、验收 |
 
 ## Skills（可复用操作）
@@ -22,8 +77,11 @@ Skill 定义"做什么"，Agent 定义"谁来做"。多 Agent Skill 的每个 Ph
 | Skill | 触发 | 文件 |
 |-------|------|------|
 | 迭代功能 | 人工下发功能需求或修改代码 | .harness/skills/iterate-feature.md |
-| 回填知识库 | 人工指令 | .harness/skills/backfill-knowledge.md |
+| 修复Bug | 人工下发Bug修复或异常行为修复需求 | .harness/skills/fix-bug.md |
+| 回填知识库 | 人工指令 | .harness/skills/harness-ops/backfill-knowledge.md |
+| 从教训回填知识库 | 人工指令 | .harness/skills/harness-ops/backfill-knowledge-from-lessons.md |
 | 回填产品文档 | 人工指令 | .harness/skills/harness-ops/backfill-prd.md |
+| 迭代Harness文档 | 人工下发修改文档需求 | .harness/skills/iterate-harness-docs.md |
 | 治理代码 | 人工指令 | .harness/skills/harness-ops/governance-code.md |
 | 验证构建 | 功能迭代完成后自动执行，或人工指令 | .harness/skills/verify-build.md |
 | 治理技能 | 人工指令 | .harness/skills/harness-ops/governance-capability.md |
@@ -31,7 +89,7 @@ Skill 定义"做什么"，Agent 定义"谁来做"。多 Agent Skill 的每个 Ph
 | 治理全部 | 人工指令 | .harness/skills/harness-ops/governance-all.md |
 | 总结任务 | AI自动触发（任务完成后） | .harness/skills/summarize-task.md |
 
-自动触发：标注"AI自动触发"的 Skill 必须在对应时机自动执行。当前仅 Skill: 总结任务（仅适用于按迭代功能完整流程执行的任务）。
+自动触发：标注"AI自动触发"的 Skill 必须在对应时机自动执行。当前仅 Skill: 总结任务（适用于按迭代功能或修复Bug完整流程执行的任务）。
 
 ## Subskills（并行扫描任务）
 
@@ -39,154 +97,87 @@ Skill 定义"做什么"，Agent 定义"谁来做"。多 Agent Skill 的每个 Ph
 
 | Subskill | 文件 | 调用方 |
 |----------|------|--------|
-| (模板示例) scan-example | .harness/skills/subskills/scan-example.md | Reviewer Step 2, 治理代码 Phase 2 |
-
-## 流程合规
-
-### 任务执行入口（不可压缩）
-
-任务开始时首先进行 任务分类和Skill路由（新 Task 或同一 Task 内的第 2+ 次迭代均需分类），必须立即执行以下步骤，禁止跳过：
-
-1. 任务分类：判断任务类型。优先匹配：用户明确指定已注册 Skill 名称（如"治理代码"等）时，直接路由到对应 Skill，跳过步骤 2-3。否则：功能需求或修改代码 -> `Skill: 迭代功能`，其它任务按需路由到已注册 Skill 或直接执行
-2. 读取 Skill 定义：立即读取对应的 Skill 文件（如 `.harness/skills/iterate-feature.md`）
-3. 遵循 Skill 流程：按 Skill 文件定义的 Phase 顺序执行；特别强调，`[GATE]` 标记的 Phase 必须在消息框展示意图、等待人工确认，否则禁止执行后续 Phase
-
-禁止行为：
-- 禁止在读取 Skill 定义前直接开始代码实现
-- 禁止跳过任何 Phase，禁止简化、改编、拆分或合并 Phase
-- 禁止跳过`Phase 门禁[GATE]`（见下方 GATE 规则）
-- 禁止跳过、简化、改动 Phase的消息输出格式
-- 禁止主动调起 superpowers 插件（形如 `superpowers:skill-x`）；仅在用户明确指令时才可调用
-
-
-### Phase 门禁（GATE）规则（不可压缩）
-
-- `[GATE]` 标记的 Phase 结束后，必须立即结束当前回复，使用 `ask_followup_question` 工具向用户请求确认；禁止在同一条回复中继续后续 Phase
-- `[GATE]` Phase 收到用户修正时：更新内容后必须重新输出完整摘要并重走 GATE 确认流程；用户修正 ≠ 用户确认，禁止将修正视为确认直接进入后续 Phase
-- `[GATE-ENTRY]` 标记的 Phase 开始前，必须确认用户已在上一条消息中给出明确回复；若前置 GATE Phase 在当前回复中刚输出，说明 GATE 被违反，必须停止
-- 当前 GATE 点：迭代功能 Phase 2 -> Phase 3
-
-### 引用外部步骤的执行约束（不可压缩）
-
-- 当文档引用其它能力的 Step 而未展开描述时，在引用处必须附加约束：`每个 Step 必须实际执行并产出独立结果，禁止跳过或虚报`
-
-### 不可压缩章节保护规则（不可压缩）
-
-- 标记为 `不可压缩` 的章节，AI 发现其内容存在问题时，只能以消息方式提示用户
-- AI 禁止自动修改 `不可压缩` 章节的内容
-- AI 禁止索要用户确认然后代为修改 `不可压缩` 章节的内容（防止用户误授权）
-
-### 消息输出格式（不可压缩）
-
-- 任务声明：任务开始时声明任务类型和架构（新 Task 或同一 Task 内的第 2+ 次迭代均需声明），标准格式：`任务类型：功能需求；调度架构：多Agent` 或 `任务类型：修改文档；调度架构：单Agent`；同一 Task 内第 2+ 次迭代追加标注：`任务类型：功能需求；调度架构：多Agent。同一 Task 内第 N 次迭代`；非迭代功能类任务标注实际类型即可
-- 阶段描述：Skill 流程中的每个 Phase，输出时使用 `## Phase N: 名称` 作为段落标题，名称严格对齐 Skill 定义（如 `## Phase 1: 任务调度`）；Phase 标题必须独占一行，禁止在同一行附加角色标注或其它内容
-- 角色标注：每个 Phase/Step 输出标注执行 Agent：`[Agent: 角色名]` 或 `[Agent: 角色名 (subagent)]`，角色名使用英文；角色标注紧跟 Phase 标题下一行，不与标题混合
-  - 阶段和角色组合格式示例：`## Phase 1: 任务调度`（标题独占一行）换行后 `[Agent: Orchestrator]`（角色标注独占一行）换行后正文内容
-- 术语禁忌：约束类术语（"硬性门禁""流程违规"等）只在规范文档中体现，不输出到用户消息框
+| (模板示例) scan-example | .harness/skills/subskills/scan-example.md | Reviewer Step 1, 治理代码 Phase 2 |
 
 ## 文件与文档
 
 - 禁止主动创建 README；不删除项目文件
 - 文件名：小写英文 kebab-case，动词-名词 语序（如 governance-code）；标题和描述使用中文，同样动词-名词 语序
+- 命名语言约定：Agent 名称使用英文（Orchestrator、Reviewer）；Skill/Subskill 显示名使用中文（迭代功能、扫描架构边界）、文件名使用英文 kebab-case；消息输出中角色标注使用英文（`[Agent: Orchestrator]`）
 - AI 只读目录（修改前必须人工确认）：.harness/agents/、.harness/prd/、.harness/guides/
 - prd/ 与 knowledge/ 知识库冲突时，提示用户确认
 - 文档禁用 emoji/加粗/斜体，使用普通文字
-- 执行计划文件落盘到 `.harness/plans/active/plan-{YYMMDD}-{desc}.md`，任务完成后移动到 `completed/`（详见"执行计划管理"章节）
+- 执行计划文件管理详见"执行计划管理"章节
+- 引用方向自上而下，下层不反向引用上层具体定义（详见 .harness/guides/00-harness-desc.md 3.4 节）
+- .harness/ 下引用项目文件路径时，使用项目根目录相对路径，不使用绝对路径
 
 ## 命令执行
 
 - 命令行超过 10 行时，必须先将脚本写入 `locals/harness_tmp/` 再执行，防止 Terminal 异常阻塞流程
 - `locals/harness_tmp/` 由 AI 自主维护（创建、清理均无需用户确认），已在 `.gitignore` 覆盖范围内
 
-### 文档引用方向
-
-.harness/ 文档体系分为四层，引用方向应自上而下：
-
-| 层级 | 目录 | 职责 |
-|------|------|------|
-| Layer 0 | AGENTS.md | 顶层入口，注册并索引所有 .harness/ 文件 |
-| Layer 1 | .harness/agents/ | Agent 角色定义 -- "谁来做" |
-| Layer 2 | .harness/skills/ | Skill 流程定义 -- "怎么做" |
-| Layer 3 | .harness/skills/subskills/ | Subskill 任务模板 -- "做什么" |
-| 数据层 | .harness/knowledge/ + .harness/prd/ + .harness/guides/ | 知识库、产品文档、方法论，被上层按需读取 |
-
-引用方向规则：
-- 向下引用：上层引用下层的具体定义（如 Skills 引用 Agents，Agents 调度 Subskills）
-- 同层编排：同层文件可通过编排引用（如 governance-all.md 编排其他 Skills）
-- 反向指回（限定）：下层仅允许"指回入口"式引用，不反向引用上层的具体定义
-
-允许的特例：
-- AGENTS.md 与 knowledge/03-conventions.md：双向声明摘要-权威源关系（AGENTS.md 项目规范为摘要，03-conventions.md 为权威源）
-- knowledge/01-overview.md 指回 AGENTS.md：入口指引（"操作约束见 AGENTS.md"）
-
-路径规则：
-- .harness/ 下的文档引用项目文件路径时，使用项目根目录相对路径，不使用绝对路径
-
 ## 上下文管理
 
-- 首次加载（Task 首条消息），必须读取 `.harness/knowledge/` 全部文件 + `.harness/prd/`（除 03-prd-specs.md），了解项目全貌
+- 首次加载（Task 首条消息）分层加载知识库：
+  1. 必读：读取 `.harness/knowledge/`、`.harness/prd/`（除 03-prd-specs.md）和 `.harness/lessons/` 每个文件的首行 `<!-- SUMMARY: ... -->` 注释，建立全局索引
+  2. 必读：完整读取 `01-overview.md`（项目概览）+ `22-file-map.md`（文件映射）
+  3. 按需：根据任务类型完整读取相关文件（见下方"任务类型加载矩阵"）
 - 后续迭代（同一 Task 内），按需查阅 `.harness/knowledge/` 和 `.harness/prd/`，不重复加载已知内容，因为每类知识有且只有一个归属文档、不重复维护
-- 多步任务：每步完成压缩为检查点摘要（不超过 5 行），后续只携带摘要；每步只加载必需文件
+- 多步任务：每步完成压缩为检查点摘要（见下方"检查点摘要模板"），后续只携带摘要；每步只加载必需文件
 - 所有步骤均为必选项，禁止因上下文压力跳过；上下文紧张时先压缩已有内容再继续
 - 委派产出（subagent、跨 Phase 交接）：产出结构化结论（表格、要点），不搬运原文；需要完整内容时直接读取源文件
 - 产出超限时：缩小单次任务范围或拆分为多个子任务，不重试相同范围
 - 各 Skill 如有更具体的上下文管理要求，以 Skill 文件为准
 
+### 任务类型加载矩阵
+
+首次加载时，根据任务类型选择性读取知识库文件（所有文件首行 SUMMARY 始终必读）：
+
+| 任务类型 | 必读（完整读取） | 按需读取 |
+|---------|----------------|---------|
+| 功能需求 | 01-overview, 02-architecture, 22-file-map, 01-prd-sense, 02-prd-baseline | 03-conventions, 04-data-boundaries, 05-key-patterns, 21-glossary |
+| Bug修复 | 01-overview, 03-conventions, 22-file-map | 02-architecture, 04-data-boundaries, 05-key-patterns, 21-glossary |
+| 治理/扫描 | 01-overview, 03-conventions, 22-file-map | 02-architecture, 05-key-patterns |
+| 文档维护 | 01-overview, 22-file-map | 按涉及文档内容按需读取 |
+
+### 检查点摘要模板
+
+Phase 间交接使用结构化检查点摘要（不超过 10 行），标准格式：
+
+```
+[Phase N: 名称] 目标: {一句话}; 产出: {文件/决策}; 变更: {file1(修改), file2(新增)}; 状态: {完成/部分完成}; 后续依赖: {下一Phase需要的关键信息}
+```
+
+各 Skill 可在此模板基础上定义更具体的字段（如 iterate-feature 的 scope/tasks 字段），但必须保持单行格式、不超过 10 行。
+
 ## 执行计划管理
 
-AI 通过 `.harness/specs/` 和 `.harness/plans/` 自主管理设计文档和实现计划，跟踪任务进度和技术债。
+AI 通过 `.harness/specs/` 和 `.harness/plans/` 自主管理设计文档和实现计划（目录结构见"仓库结构"）。
 
-### 目录结构
+### Spec 与 Plan
 
-```
-.harness/
-  specs/             -- 设计文档（WHAT：需求、架构、设计决策）
-    active/          -- 当前活跃 spec（原则上只有 1 个文件）
-    completed/       -- 已完成 spec 归档
-  plans/             -- 实现计划（HOW：具体步骤、代码、验证命令）
-    active/          -- 当前活跃计划（原则上只有 1 个文件）
-    completed/       -- 已完成计划归档
-    debt-tracker.md  -- 技术债追踪
-```
-
-### Spec 文件（设计文档）
-
-命名：`spec-{YYMMDD}-{desc}.md`（YYMMDD 为创建日期）。
-
-触发条件：用户在 PRD-Specs 中显式要求（如"约束：plan中请先给出PRD设计"），或影响 3+ 模块/涉及新模块创建时建议产出。小型需求可省略 spec，直接创建 plan。
-
-spec 是一次性产物，服务于当前任务的设计确认和实现。实现完成后，持久性架构知识通过 Phase 5 知识回填写入 knowledge/。
-
-模板：权威定义见 `.harness/skills/superpowers/brainstorming.md` 中的 Spec document template 节。关键要素：
-- Header：创建时间、状态、任务来源、Goal、Architecture
-- Body：Components（职责/接口/依赖）、Data Flow、Data Model、UI Design、Error Handling、Constraints
-- Footer：Acceptance Criteria（可验证的验收条件）
-
-### Plan 文件（实现计划）
-
-命名：`plan-{YYMMDD}-{desc}.md`（YYMMDD 为创建日期），每个窗口使用独立计划文件，同一窗口内第 2+ 次迭代复用同一计划文件。
-
-模板：权威定义见 `.harness/skills/superpowers/writing-plans.md` 中的 Plan Document Header / Task Structure / Plan Document Footer 三节。关键要素：
-- Header：创建时间、状态、关联 spec、Goal、Architecture、Tech Stack
-- Task：File Structure + 逐 task TDD 步骤（failing test -> verify fail -> implement -> verify pass）
-- Footer：变更记录表 + 发现的技术债（引用 debt-tracker.md ID）
+- Spec 命名：`spec-{YYMMDD}-{desc}.md`，模板见 `.harness/skills/superpowers/brainstorming.md`
+- Plan 命名：`plan-{YYMMDD}-{desc}.md`，模板见 `.harness/skills/superpowers/writing-plans.md`
+- Spec 触发：用户显式要求，或影响 3+ 模块/涉及新模块创建时建议产出；小型需求可省略 spec 直接创建 plan
+- Spec 是一次性产物，实现完成后持久性知识通过 Phase 5 回填 knowledge/
+- 同一窗口内第 2+ 次迭代复用同一计划文件
 
 ### 生命周期
 
-同一 Task 只允许有 1 个 spec + 1 个 plan。
+同一 Task 允许 1 spec + 1 plan；不同 Task 的文件可在 active/ 中并行。
 
-1. Phase 1（任务调度）：检测 `specs/active/` 和 `plans/active/` 是否有未完成文件；若有，提示用户上个任务是继续或是删除；若无但 `completed/` 中有当前 Task 的文件，移回 `active/` 复用（状态改回 active）；均无则在后续 Phase 3 创建
-2. Phase 3（意图确认）：设计文档写入 `specs/active/spec-{YYMMDD}-{desc}.md`，实现计划写入 `plans/active/plan-{YYMMDD}-{desc}.md`
-3. 任务执行中：更新 plan 检查清单状态，记录变更，记录发现的技术债
-4. Phase 6（任务总结）：将 spec 和 plan 状态改为 completed，分别移动到对应的 `completed/`
+| 阶段 | 操作 | 规则 |
+|------|------|------|
+| Phase 1 任务调度 | 检测 active/ | 有则复用；completed/ 中有则移回；均无则 Phase 3 创建 |
+| Phase 3 意图确认 | 写入 | spec -> `specs/active/`，plan -> `plans/active/` |
+| 任务执行中 | 更新 plan | 更新检查清单、记录变更和技术债 |
+| Phase 6/7 任务总结 | 归档 | 状态改 completed，移到 `completed/` |
 
 ### 技术债管理
 
-- 新引入的技术债必须在本次任务中解决，禁止拖延；
-- 新发现但没有及时处理的技术债，记录到 `debt-tracker.md`
-- 新发现技术债时必须立即写入 `debt-tracker.md`（获得 ID），然后在计划文件中引用该 ID；禁止仅记录在计划文件中
+- 新引入的技术债必须在本次任务中解决，禁止拖延
+- 新发现的技术债必须立即写入 `plans/debt-tracker.md`（获得 ID），再在计划文件中引用该 ID
 - 格式：表格（ID/描述/优先级/来源计划/发现时间/状态）
-- 在合适时机修复（如任务间隙、治理代码时）
 
 ## 维护
 
@@ -202,19 +193,20 @@ spec 是一次性产物，服务于当前任务的设计确认和实现。实现
 AGENTS.md              -- AI 知识库入口（本文件）
 .harness/
   README.md            -- Harness 工程模板说明
-  agents/              -- Agent 角色模板（Orchestrator、Reviewer）
-  skills/              -- Skill 定义（迭代功能、回填知识库、验证构建、总结任务）
+  agents/              -- Agent 角色模板（Orchestrator、Designer、Planner、Coder、Reviewer）
+  skills/              -- Skill 定义（迭代功能、修复Bug、迭代Harness文档、回填知识库、验证构建、总结任务）
     harness-ops/       -- Harness 运维类 Skill（治理代码、治理技能、治理全部、提取模板、回填产品文档）
     subskills/         -- Subskill 扫描模板
     superpowers/       -- superpowers 方法论技能（开发方法论，本地适配版）
   specs/               -- 设计文档（WHAT：需求、架构、设计决策）
-    active/            -- 当前活跃 spec（原则上只有 1 个文件）
+    active/            -- 当前活跃 spec（可多文件并行）
     completed/         -- 已完成 spec 归档
   plans/               -- 实现计划（HOW：具体步骤、代码、验证命令）
-    active/            -- 当前活跃计划（原则上只有 1 个文件）
+    active/            -- 当前活跃计划（可多文件并行）
     completed/         -- 已完成计划归档（不入 git）
     debt-tracker.md    -- 技术债追踪
   guides/              -- 方法论与参考文档（人工维护）
+  lessons/             -- 教训库（AI自主维护：general仅Harness相关、project绑定本项目）
   knowledge/           -- AI 知识库（01~05 认知约束类, 21~22 工具索引类）
   prd/                 -- 产品文档（AI只读：01-prd-sense、02-prd-baseline、03-prd-specs）
 index.html             -- 入口 HTML
@@ -255,6 +247,20 @@ python3 -m http.server 8888
 - 新源文件 -> 22-file-map.md
 - 新跨文件模式 -> 05-key-patterns.md
 - 产品方向调整 -> 提示用户，人工更新 prd/01-prd-sense.md 或触发 Skill: 回填产品文档
+
+## 教训库维护规则
+
+AI 自主维护 `.harness/lessons/`，人工可通过提示或建议触发新增/修正。
+教训是原始素材，knowledge/ 是提炼后的权威知识；教训通过人工触发的回填流程沉淀为知识。
+
+- 写入时机：Bug修复完成后，根因非显而易见时，自动提取教训写入；功能迭代中踩坑时同理
+- 分级：仅与 Harness 框架相关、不绑定具体语言/框架/项目的通用经验 -> general.md；绑定本项目的具体经验 -> project.md
+- 条目格式：`### L/P{序号}: 标题`，含现象/根因/教训/来源四字段
+- 编号：general 用 L001 递增，project 用 P001 递增
+- 去重：写入前检查是否已有同类教训，有则更新而非新增
+- 加载策略：任务启动只读 SUMMARY 索引，不完整加载；仅用户明确指令或当前根因与 SUMMARY 高度相关时按需读取详情
+- 回填：人工触发 `Skill: 回填知识库` 时，将已沉淀的教训抽象为通用规则写入 knowledge/，回填后删除原教训条目
+- 提取：`Skill: 提取Harness模板` 时 general.md 随模板带走，project.md 留在项目内
 
 ## 代码生成
 
@@ -300,3 +306,5 @@ python3 -m http.server 8888
 | .harness/guides/00-harness-desc.md | 了解 Harness 体系描述时 |
 | .harness/guides/01-harness-ops.md | 了解 Harness 运维操作时 |
 | .harness/guides/02-harness-dev.md | 了解 Harness 开发流程时 |
+| .harness/lessons/general.md | 用户指令或当前根因与 SUMMARY 高度相关时按需读取 |
+| .harness/lessons/project.md | 用户指令或当前根因与 SUMMARY 高度相关时按需读取 |
