@@ -77,7 +77,7 @@ class CropTool extends BaseTool {
     let w = Math.abs(x2 - x1);
     let h = Math.abs(y2 - y1);
 
-    const ratioKey = state.getToolOption('crop', 'ratio') || 'free';
+    const ratioKey = state.getToolOption('crop', 'ratio') || 'original';
     const ratioVal = RATIOS[ratioKey];
 
     if (ratioVal === 'original') {
@@ -317,7 +317,7 @@ class CropTool extends BaseTool {
   }
 
   renderPropertyBar(container) {
-    const currentRatio = state.getToolOption('crop', 'ratio') || 'free';
+    const currentRatio = state.getToolOption('crop', 'ratio') || 'original';
     container.innerHTML = `
       <label class="c-property-bar__label">比例</label>
       <select id="cropRatio">

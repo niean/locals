@@ -8,7 +8,7 @@ const state = {
   canvasWidth: 0,
   canvasHeight: 0,
   toolOptions: {
-    crop: { ratio: 'free' },
+    crop: { ratio: 'original' },
     brush: { size: 5, color: '#ff0000' },
     text: { fontSize: 24, color: '#000000', fontFamily: 'Arial' },
     shape: { type: 'arrow', color: '#ff0000', lineWidth: 2 },
