@@ -1,0 +1,4 @@
+# Harness
+locals/harness_tmp/
+.harness/plans/completed/
+.harness/specs/completed/

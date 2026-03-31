@@ -9,11 +9,19 @@
     <script src="lib/highlight.min.js"></script>
     <link rel="stylesheet" href="lib/github.min.css">
     <style>
+        /* ==========================================================================
+           Generic - Reset
+           ========================================================================== */
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
+        /* ==========================================================================
+           Elements - Base element styles
+           ========================================================================== */
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
@@ -23,6 +31,9 @@
             position: relative;
         }
 
+        /* ==========================================================================
+           Components - Container
+           ========================================================================== */
 
         .container {
             max-width: 1400px;
@@ -36,6 +47,10 @@
             min-height: calc(100vh - 40px);
         }
 
+        /* ==========================================================================
+           Components - Header
+           ========================================================================== */
+
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -45,21 +60,26 @@
             align-items: center;
         }
 
-        .header-content {
+        .header__content {
             flex: 1;
         }
 
-        .header h1 {
+        .header__title {
             font-size: 1.8em;
             margin-bottom: 5px;
         }
 
-        .header p {
+        .header__subtitle {
             opacity: 0.9;
             font-size: 0.9em;
         }
 
-        .toggle-input-btn {
+        .header__actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header__action-btn {
             background: rgba(255, 255, 255, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.3);
             color: white;
@@ -72,11 +92,26 @@
             white-space: nowrap;
         }
 
-        .toggle-input-btn:hover {
+        .header__action-btn:hover {
             background: rgba(255, 255, 255, 0.3);
             border-color: rgba(255, 255, 255, 0.5);
         }
 
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .header__title {
+                font-size: 1.5em;
+            }
+        }
+
+        /* ==========================================================================
+           Components - Output Section
+           ========================================================================== */
 
         .output-section {
             padding: 30px;
@@ -84,10 +119,6 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-        }
-
-        .markdown-content {
-            flex: 1;
         }
 
         .output-header {
@@ -99,22 +130,28 @@
             border-bottom: 2px solid #e9ecef;
         }
 
-        .output-header h2 {
+        .output-header__title {
             color: #495057;
             font-size: 1.5em;
             word-break: break-all;
         }
 
-        .file-info {
-            color: #6c757d;
-            font-size: 14px;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
-            text-align: right;
+        @media (max-width: 768px) {
+            .output-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
         }
 
+        /* ==========================================================================
+           Components - Markdown Content
+           marked.js generates raw HTML without custom classes,
+           so descendant selectors are intentionally used here.
+           ========================================================================== */
+
         .markdown-content {
+            flex: 1;
             line-height: 1.8;
             color: #212529;
         }
@@ -241,21 +278,29 @@
             border: 0;
         }
 
+        /* ==========================================================================
+           Components - Empty State
+           ========================================================================== */
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
             color: #6c757d;
         }
 
-        .empty-state-icon {
+        .empty-state__icon {
             font-size: 64px;
             margin-bottom: 20px;
             opacity: 0.5;
         }
 
-        .empty-state-text {
+        .empty-state__text {
             font-size: 18px;
         }
+
+        /* ==========================================================================
+           Components - Error Message
+           ========================================================================== */
 
         .error-message {
             background: #fee;
@@ -266,49 +311,44 @@
             border-left: 4px solid #c33;
         }
 
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
+        /* ==========================================================================
+           Components - File Info
+           ========================================================================== */
 
-            .header h1 {
-                font-size: 1.5em;
-            }
-
-            .output-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
+        .file-info {
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            text-align: right;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="header-content">
-                <h1>📝 MD文件渲染工具</h1>
+            <div class="header__content">
+                <h1 class="header__title">📝 MD文件渲染工具</h1>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="toggle-input-btn" id="reloadFileBtn" onclick="reloadFile()" style="display: none;">
+            <div class="header__actions">
+                <button class="header__action-btn" id="reloadFileBtn" style="display: none;">
                     🔄 重新加载
                 </button>
-            <button class="toggle-input-btn" id="openFileBtn" onclick="openFileWithAPI()">
-                📁 打开文件
-            </button>
+                <button class="header__action-btn" id="openFileBtn">
+                    📁 打开文件
+                </button>
             </div>
         </div>
 
-        <input type="file" id="fileInput" accept=".md,.markdown,.txt" onchange="handleFileSelect(event)" style="display: none;">
+        <input type="file" id="fileInput" accept=".md,.markdown,.txt" style="display: none;">
 
         <div class="output-section">
             <div id="errorContainer"></div>
             <div id="markdownOutput" class="markdown-content">
                 <div class="empty-state">
-                    <div class="empty-state-icon">📄</div>
-                    <div class="empty-state-text">请点击右上角的"打开文件"按钮选择 Markdown 文件</div>
+                    <div class="empty-state__icon">📄</div>
+                    <div class="empty-state__text">请点击右上角的"打开文件"按钮选择 Markdown 文件</div>
                 </div>
             </div>
             <div class="file-info" id="fileInfo"></div>
@@ -316,18 +356,22 @@
     </div>
 
     <script>
+        // 文件大小单位常量
+        const BYTES_PER_KB = 1024;
+        const BYTES_PER_MB = 1024 * 1024;
+
         // 配置 marked
         marked.setOptions({
-            highlight: function(code, lang) {
+            highlight: (code, lang) => {
                 if (lang && hljs.getLanguage(lang)) {
                     try {
                         return hljs.highlight(code, { language: lang }).value;
-                    } catch (err) {}
+                    } catch (err) {} // 静默处理高亮失败，降级为自动检测
                 }
                 return hljs.highlightAuto(code).value;
             },
             breaks: true,
-            gfm: true
+            gfm: true,
         });
 
         // 保存当前文件的句柄和路径信息
@@ -336,115 +380,102 @@
         let currentFileName = null;
 
         // 显示错误信息
-        function showError(message) {
+        const showError = (message) => {
             const errorContainer = document.getElementById('errorContainer');
             errorContainer.innerHTML = `<div class="error-message">❌ ${message}</div>`;
-        }
+        };
 
         // 清除错误信息
-        function clearError() {
+        const clearError = () => {
             document.getElementById('errorContainer').innerHTML = '';
-        }
+        };
 
         // 显示/隐藏重新加载按钮
-        function toggleReloadButton(show) {
+        const toggleReloadButton = (show) => {
             const reloadBtn = document.getElementById('reloadFileBtn');
             if (reloadBtn) {
                 reloadBtn.style.display = show ? 'block' : 'none';
             }
-        }
+        };
 
+        // 格式化字节数显示
+        const formatBytes = (bytes) => {
+            if (bytes < BYTES_PER_KB) return `${bytes} B`;
+            if (bytes < BYTES_PER_MB) return `${(bytes / BYTES_PER_KB).toFixed(2)} KB`;
+            return `${(bytes / BYTES_PER_MB).toFixed(2)} MB`;
+        };
+
+        // 格式化更新时间显示
+        const formatDate = (timestamp) => {
+            if (!timestamp) return '未知';
+            const date = new Date(timestamp);
+            const dateStr = date.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+            });
+            const timeStr = date.toLocaleTimeString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+            return `${dateStr} ${timeStr}`;
+        };
 
         // 渲染 Markdown
-        function renderMarkdown(content, filePath, fileName, fileHandle = null, lastModified = null) {
+        const renderMarkdown = (content, filePath, fileName, fileHandle = null, lastModified = null) => {
             try {
                 clearError();
                 const html = marked.parse(content);
                 document.getElementById('markdownOutput').innerHTML = html;
-                
+
                 // 保存文件句柄和路径信息，用于重新加载
                 currentFileHandle = fileHandle;
                 currentFilePath = filePath;
                 currentFileName = fileName;
-                
+
                 // 更新文件信息（包含文件路径、行数、字节数、更新时间）
                 const fileInfoEl = document.getElementById('fileInfo');
-                const outputTitleEl = document.getElementById('outputTitle');
-                
+
                 if (filePath && content) {
-                    // 计算行数
                     const lineCount = content.split('\n').length;
-                    
-                    // 计算字节数（UTF-8编码）
                     const byteCount = new TextEncoder().encode(content).length;
-                    
-                    // 格式化字节数显示
-                    const formatBytes = (bytes) => {
-                        if (bytes < 1024) return bytes + ' B';
-                        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-                        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-                    };
-                    
-                    // 格式化更新时间显示
-                    const formatDate = (timestamp) => {
-                        if (!timestamp) return '未知';
-                        const date = new Date(timestamp);
-                        
-                        return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + 
-                               date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-                    };
-                    
-                    // 使用文件路径，如果没有则使用文件名
                     const displayPath = filePath || fileName || '未知文件';
-                    const displayName = fileName || filePath.split(/[/\\]/).pop() || '未知文件';
                     const updateTime = formatDate(lastModified);
-                    
+
                     if (fileInfoEl) {
                         fileInfoEl.textContent = `文件：${displayPath} | 行数：${lineCount} | 大小：${formatBytes(byteCount)} | 时间：${updateTime}`;
                     }
-                    if (outputTitleEl) {
-                        outputTitleEl.textContent = displayName;
-                    }
-                    
-                    // 显示重新加载按钮
+
                     toggleReloadButton(true);
                 } else {
                     if (fileInfoEl) {
                         fileInfoEl.textContent = '';
                     }
-                    if (outputTitleEl) {
-                        outputTitleEl.textContent = '渲染结果';
-                    }
-                    
-                    // 隐藏重新加载按钮
+
                     toggleReloadButton(false);
                 }
-                
             } catch (error) {
-                showError('渲染 Markdown 时出错：' + error.message);
+                showError(`渲染 Markdown 时出错：${error.message}`);
             }
-        }
+        };
 
         // 读取文件内容
-        function readFile(file, fileHandle = null) {
+        const readFile = (file, fileHandle = null) => {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = (e) => {
                 const content = e.target.result;
-                // 尝试获取完整文件路径（浏览器安全限制，可能无法获取）
-                // 优先使用 file.path，其次是 webkitRelativePath，最后是文件名
                 const filePath = file.path || file.webkitRelativePath || file.name;
-                // 获取文件的最后修改时间
                 const lastModified = file.lastModified || null;
                 renderMarkdown(content, filePath, file.name, fileHandle, lastModified);
             };
-            reader.onerror = function() {
+            reader.onerror = () => {
                 showError('读取文件失败');
             };
             reader.readAsText(file, 'UTF-8');
-        }
+        };
 
         // 重新加载文件
-        async function reloadFile() {
+        const reloadFile = async () => {
             if (!currentFileHandle && !currentFilePath) {
                 showError('没有可重新加载的文件');
                 return;
@@ -464,13 +495,13 @@
                         const [handle] = await window.showOpenFilePicker({
                             types: [{
                                 description: 'Markdown 文件',
-                                accept: { 
+                                accept: {
                                     'text/markdown': ['.md', '.markdown'],
-                                    'text/plain': ['.txt']
-                                }
+                                    'text/plain': ['.txt'],
+                                },
                             }],
                             excludeAcceptAllOption: false,
-                            multiple: false
+                            multiple: false,
                         });
 
                         const file = await handle.getFile();
@@ -490,7 +521,6 @@
                         const response = await fetch(currentFilePath);
                         if (response.ok) {
                             const content = await response.text();
-                            // 尝试从响应头获取最后修改时间
                             const lastModifiedHeader = response.headers.get('Last-Modified');
                             const lastModified = lastModifiedHeader ? new Date(lastModifiedHeader).getTime() : null;
                             renderMarkdown(content, currentFilePath, currentFileName, null, lastModified);
@@ -503,14 +533,13 @@
 
                 // 最后尝试：提示用户重新选择文件
                 showError('无法自动重新加载文件，请使用"打开文件"按钮重新选择文件');
-                
             } catch (error) {
-                showError('重新加载文件失败: ' + error.message);
+                showError(`重新加载文件失败: ${error.message}`);
             }
-        }
+        };
 
         // 使用 File System Access API 打开文件
-        async function openFileWithAPI() {
+        const openFileWithAPI = async () => {
             if (!window.showOpenFilePicker) {
                 console.log('不支持 File System Access API，回退到传统方式');
                 document.getElementById('fileInput').click();
@@ -521,13 +550,13 @@
                 const [fileHandle] = await window.showOpenFilePicker({
                     types: [{
                         description: 'Markdown 文件',
-                        accept: { 
+                        accept: {
                             'text/markdown': ['.md', '.markdown'],
-                            'text/plain': ['.txt']
-                        }
+                            'text/plain': ['.txt'],
+                        },
                     }],
                     excludeAcceptAllOption: false,
-                    multiple: false
+                    multiple: false,
                 });
 
                 const file = await fileHandle.getFile();
@@ -535,13 +564,13 @@
             } catch (e) {
                 if (e.name !== 'AbortError') {
                     console.error('打开文件失败:', e);
-                    showError('打开文件失败: ' + e.message);
+                    showError(`打开文件失败: ${e.message}`);
                 }
             }
-        }
+        };
 
         // 文件选择（通过 input file）
-        function handleFileSelect(event) {
+        const handleFileSelect = (event) => {
             const file = event.target.files[0];
             if (file) {
                 if (!file.name.match(/\.(md|markdown|txt)$/i)) {
@@ -550,9 +579,12 @@
                 }
                 readFile(file);
             }
-        }
+        };
 
-
+        // 绑定事件监听器
+        document.getElementById('reloadFileBtn').addEventListener('click', reloadFile);
+        document.getElementById('openFileBtn').addEventListener('click', openFileWithAPI);
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
     </script>
 </body>
 </html>
