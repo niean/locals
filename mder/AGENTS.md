@@ -97,8 +97,12 @@ Skill 定义"做什么"，Agent 定义"谁来做"。多 Agent Skill 的每个 Ph
 
 | Subskill | 文件 | 调用方 |
 |----------|------|--------|
-| 扫描安全 | .harness/skills/subskills/scan-security.md | Reviewer Step 1, 治理代码 Phase 2 |
-| 扫描代码质量 | .harness/skills/subskills/scan-code-quality.md | Reviewer Step 1, 治理代码 Phase 2 |
+| 扫描架构边界 | .harness/skills/subskills/scan-architecture.md | Reviewer Step 2, 治理代码 Phase 2 |
+| 扫描编码约定 | .harness/skills/subskills/scan-conventions.md | Reviewer Step 2, 治理代码 Phase 2 |
+| 扫描安全 | .harness/skills/subskills/scan-security.md | Reviewer Step 2, 治理代码 Phase 2 |
+| 扫描图片处理 | .harness/skills/subskills/scan-image-handling.md | Reviewer Step 2 |
+| 扫描日志规范 | .harness/skills/subskills/scan-logging.md | Reviewer Step 2 |
+| 扫描代码质量 | .harness/skills/subskills/scan-code-quality.md | Reviewer Step 2, 治理代码 Phase 2 |
 
 ## 文件与文档
 
@@ -222,11 +226,10 @@ locals/                -- 本地敏感配置
 
 ```bash
 # 构建（验证）
-open index.html
+# 父目录已启动 HTTP 服务（端口 8888），浏览器访问：
+# http://localhost:8888/mder/
 # 单元测试
 # 无自动化测试框架，通过浏览器手动验证
-# API 配置（首次）
-# 无需配置，直接在浏览器中打开 index.html 即可使用
 ```
 
 ## 知识回填规则

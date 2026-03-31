@@ -10,7 +10,7 @@ mder -- 浏览器端Markdown文件渲染工具，打开并渲染.md/.markdown/.t
 - 语言：HTML5 + CSS3 + 原生JavaScript（ES6+）
 - Markdown解析：Marked.js（lib/marked.min.js）
 - 语法高亮：Highlight.js（lib/highlight.min.js）+ GitHub风格样式（lib/github.min.css）
-- 构建工具：无（纯静态文件，浏览器直接打开）
+- 构建工具：无（纯静态文件，通过 HTTP 服务访问 http://localhost:8888/mder/）
 - 包管理：无（第三方库以压缩文件形式引入）
 
 ## 入口与根状态

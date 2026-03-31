@@ -39,6 +39,7 @@
 
 - 纯前端实现，无后端依赖
 - 单HTML文件 + lib/目录第三方库
+- 项目访问地址：http://localhost:8888/mder/（父目录启动 HTTP 服务，端口 8888）
 - 响应式适配（移动端 max-width: 768px）
 - 浏览器兼容：Chrome、Safari、Firefox、Edge最新版
 - 文件编码：UTF-8
