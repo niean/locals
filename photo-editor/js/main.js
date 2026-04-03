@@ -53,6 +53,12 @@ function switchTool(toolName) {
   }
 
   updatePropertyBar();
+
+  // 控制旋转按钮可见性：仅裁剪工具显示
+  const btnRotate = document.getElementById('btnRotate');
+  if (btnRotate) {
+    btnRotate.classList.toggle('u-hidden', toolName !== 'crop');
+  }
 }
 
 function setupToolbar() {
@@ -84,6 +90,13 @@ function setupFileHandling() {
       handleFile(e.target.files[0]);
     }
     fileInput.value = '';
+  });
+
+  // 点击工作区触发图片选择（仅未加载图片时）
+  placeholder.addEventListener('click', () => {
+    if (!state.get('image')) {
+      fileInput.click();
+    }
   });
 
   // 拖拽

@@ -286,6 +286,13 @@
             text-align: center;
             padding: 60px 20px;
             color: #6c757d;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-radius: 8px;
+        }
+
+        .empty-state:hover {
+            background-color: #f8f9fa;
         }
 
         .empty-state__icon {
@@ -585,6 +592,7 @@
         document.getElementById('reloadFileBtn').addEventListener('click', reloadFile);
         document.getElementById('openFileBtn').addEventListener('click', openFileWithAPI);
         document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+        document.querySelector('.empty-state').addEventListener('click', openFileWithAPI);
     </script>
 </body>
 </html>

@@ -21,7 +21,7 @@
   gap: var(--space-md);
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
-  pointer-events: none;
+  cursor: pointer;
 }
 
 .c-canvas-area__placeholder svg {

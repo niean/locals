@@ -12,6 +12,9 @@
     - 治理：NFR，在保持既有功能的前提下，按照前端项目规范、改造项目代码架构，JS：Airbnb JavaScript Style Guide，CSS：ITCSS 架构 + BEM 命名
     - 治理：NFR，项目访问地址修改为 http://localhost:8888/mder/
 
+[20260403]
+- 新增
+    - 文件：加载文件前，支持点击空白数据区、触发打开文件；
 
 ---
 
