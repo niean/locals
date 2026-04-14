@@ -19,7 +19,7 @@ index.html (入口)
 |------|------|
 | state.js | 发布-订阅状态管理，存储当前工具、图片、工具选项 |
 | history.js | ImageData 快照栈，支持撤销/重做，最大 50 步 |
-| canvas.js | Canvas 初始化、图片加载缩放、overlay 管理、容器访问接口 |
+| canvas.js | Canvas 初始化、图片加载（原图分辨率）、CSS 显示缩放、overlay 管理、容器访问接口、缩放因子查询 |
 | BaseTool.js | 工具基类，定义 activate/deactivate/mouse 事件生命周期 |
 | CropTool.js | 裁剪工具，支持自由/固定比例选区 |
 | BrushTool.js | 画笔工具，自由绘制 |
@@ -52,3 +52,5 @@ utils/ -> 无依赖
 - 工具通过 overlay canvas 接收鼠标事件，在 main canvas 上绘制
 - 每次绘制操作完成后 push 到 history 栈
 - 工具切换时 deactivate 当前工具 -> activate 新工具
+- Canvas 像素尺寸保持原图分辨率，CSS 尺寸控制显示缩放，导出时保留原始画质
+- 工具层通过 canvas.getScale() 获取缩放因子，将 CSS 像素值转换为 canvas 像素值

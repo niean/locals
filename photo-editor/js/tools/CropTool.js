@@ -130,6 +130,7 @@ class CropTool extends BaseTool {
     if (!this.cropRect) return;
 
     const { x, y, w, h } = this.cropRect;
+    const scale = canvas.getScale();
 
     // 暗色遮罩
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -140,14 +141,14 @@ class CropTool extends BaseTool {
 
     // 选区边框
     ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
-    ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+    ctx.lineWidth = 1 * scale;
+    ctx.setLineDash([4 * scale, 4 * scale]);
+    ctx.strokeRect(x + 0.5 * scale, y + 0.5 * scale, w - 1 * scale, h - 1 * scale);
     ctx.setLineDash([]);
 
     // 三等分线
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.lineWidth = 0.5;
+    ctx.lineWidth = 0.5 * scale;
     const thirdW = w / 3;
     const thirdH = h / 3;
     for (let i = 1; i <= 2; i += 1) {
@@ -196,6 +197,7 @@ class CropTool extends BaseTool {
 
     state.set('canvasWidth', w);
     state.set('canvasHeight', h);
+    canvas.updateCanvasDisplay();
     history.push();
     this.cropRect = null;
   }

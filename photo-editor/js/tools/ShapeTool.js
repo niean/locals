@@ -48,10 +48,11 @@ class ShapeTool extends BaseTool {
     const shapeType = state.getToolOption('shape', 'type');
     const color = state.getToolOption('shape', 'color');
     const lineWidth = state.getToolOption('shape', 'lineWidth');
+    const scale = canvas.getScale();
 
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    ctx.lineWidth = lineWidth;
+    ctx.lineWidth = lineWidth * scale;
 
     if (shapeType === 'rect') {
       ctx.strokeRect(
@@ -61,14 +62,15 @@ class ShapeTool extends BaseTool {
         Math.abs(y2 - y1),
       );
     } else if (shapeType === 'arrow') {
-      this._drawArrow(ctx, x1, y1, x2, y2, lineWidth);
+      this._drawArrow(ctx, x1, y1, x2, y2, lineWidth * scale);
     } else if (shapeType === 'ellipse') {
       this._drawEllipse(ctx, x1, y1, x2, y2);
     }
   }
 
   _drawArrow(ctx, x1, y1, x2, y2, lineWidth) {
-    const headLen = Math.max(10, lineWidth * 4);
+    const scale = canvas.getScale();
+    const headLen = Math.max(10 * scale, lineWidth * 4);
     const angle = Math.atan2(y2 - y1, x2 - x1);
 
     ctx.beginPath();

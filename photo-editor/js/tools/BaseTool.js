@@ -33,10 +33,11 @@ class BaseTool {
   }
 
   getCanvasPoint(e) {
-    const rect = canvas.getOverlayCanvas().getBoundingClientRect();
+    const overlay = canvas.getOverlayCanvas();
+    const rect = overlay.getBoundingClientRect();
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: (e.clientX - rect.left) * (overlay.width / rect.width),
+      y: (e.clientY - rect.top) * (overlay.height / rect.height),
     };
   }
 

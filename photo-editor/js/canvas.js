@@ -28,29 +28,20 @@ function loadImage(img) {
     height = Math.round(height * scale);
   }
 
-  // 适应容器
-  const wrapRect = wrapperEl.getBoundingClientRect();
-  const padding = 40;
-  const maxW = wrapRect.width - padding * 2;
-  const maxH = wrapRect.height - padding * 2;
-  let displayW = width;
-  let displayH = height;
+  // 画布像素尺寸设为原图分辨率，保留画质
+  mainCanvas.width = width;
+  mainCanvas.height = height;
+  overlayCanvas.width = width;
+  overlayCanvas.height = height;
 
-  if (displayW > maxW || displayH > maxH) {
-    const scale = Math.min(maxW / displayW, maxH / displayH);
-    displayW = Math.round(displayW * scale);
-    displayH = Math.round(displayH * scale);
-  }
+  state.set('canvasWidth', width);
+  state.set('canvasHeight', height);
 
-  mainCanvas.width = displayW;
-  mainCanvas.height = displayH;
-  overlayCanvas.width = displayW;
-  overlayCanvas.height = displayH;
+  mainCtx.drawImage(img, 0, 0, width, height);
 
-  state.set('canvasWidth', displayW);
-  state.set('canvasHeight', displayH);
+  // 用 CSS 控制显示尺寸
+  updateCanvasDisplay();
 
-  mainCtx.drawImage(img, 0, 0, displayW, displayH);
   history.clear();
   history.push();
 }
@@ -75,6 +66,35 @@ function getCanvasArea() {
   return mainCanvas ? mainCanvas.parentElement : null;
 }
 
+function updateCanvasDisplay() {
+  if (!mainCanvas || !wrapperEl) return;
+
+  const wrapRect = wrapperEl.getBoundingClientRect();
+  const padding = 40;
+  const maxW = wrapRect.width - padding * 2;
+  const maxH = wrapRect.height - padding * 2;
+  let displayW = mainCanvas.width;
+  let displayH = mainCanvas.height;
+
+  if (maxW > 0 && maxH > 0 && (displayW > maxW || displayH > maxH)) {
+    const scale = Math.min(maxW / displayW, maxH / displayH);
+    displayW = Math.round(displayW * scale);
+    displayH = Math.round(displayH * scale);
+  }
+
+  mainCanvas.style.width = `${displayW}px`;
+  mainCanvas.style.height = `${displayH}px`;
+  overlayCanvas.style.width = `${displayW}px`;
+  overlayCanvas.style.height = `${displayH}px`;
+}
+
+function getScale() {
+  if (!mainCanvas) return 1;
+  const rect = mainCanvas.getBoundingClientRect();
+  if (rect.width === 0) return 1;
+  return mainCanvas.width / rect.width;
+}
+
 function clearOverlay() {
   overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
 }
@@ -85,6 +105,9 @@ function restoreFromImageData(imageData) {
   overlayCanvas.width = imageData.width;
   overlayCanvas.height = imageData.height;
   mainCtx.putImageData(imageData, 0, 0);
+  state.set('canvasWidth', imageData.width);
+  state.set('canvasHeight', imageData.height);
+  updateCanvasDisplay();
 }
 
 function rotateImage() {
@@ -117,6 +140,7 @@ function rotateImage() {
   mainCtx.drawImage(tempCanvas, 0, 0);
   mainCtx.restore();
 
+  updateCanvasDisplay();
   history.push();
 }
 
@@ -131,4 +155,6 @@ export {
   restoreFromImageData,
   getCanvasArea,
   rotateImage,
+  updateCanvasDisplay,
+  getScale,
 };

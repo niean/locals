@@ -18,8 +18,9 @@ class BrushTool extends BaseTool {
     this.lastY = p.y;
 
     const ctx = canvas.getMainCtx();
+    const scale = canvas.getScale();
     ctx.beginPath();
-    ctx.arc(p.x, p.y, state.getToolOption('brush', 'size') / 2, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, (state.getToolOption('brush', 'size') * scale) / 2, 0, Math.PI * 2);
     ctx.fillStyle = state.getToolOption('brush', 'color');
     ctx.fill();
   }
@@ -28,12 +29,13 @@ class BrushTool extends BaseTool {
     if (!this.isDrawing) return;
     const p = this.getCanvasPoint(e);
     const ctx = canvas.getMainCtx();
+    const scale = canvas.getScale();
 
     ctx.beginPath();
     ctx.moveTo(this.lastX, this.lastY);
     ctx.lineTo(p.x, p.y);
     ctx.strokeStyle = state.getToolOption('brush', 'color');
-    ctx.lineWidth = state.getToolOption('brush', 'size');
+    ctx.lineWidth = state.getToolOption('brush', 'size') * scale;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.stroke();

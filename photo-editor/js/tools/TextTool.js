@@ -26,15 +26,20 @@ class TextTool extends BaseTool {
 
   _createInput(x, y) {
     const container = canvas.getOverlayCanvas().parentElement;
+    const overlay = canvas.getOverlayCanvas();
+    const rect = overlay.getBoundingClientRect();
+    const cssX = x * (rect.width / overlay.width);
+    const cssY = y * (rect.height / overlay.height);
+    const cssFontSize = state.getToolOption('text', 'fontSize');
 
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'c-canvas-area__text-input';
     input.style.cssText = `
       position: absolute;
-      left: ${x}px;
-      top: ${y - 14}px;
-      font-size: ${state.getToolOption('text', 'fontSize')}px;
+      left: ${cssX}px;
+      top: ${cssY - 14}px;
+      font-size: ${cssFontSize}px;
       font-family: ${state.getToolOption('text', 'fontFamily')};
       color: ${state.getToolOption('text', 'color')};
       background: transparent;
@@ -69,11 +74,12 @@ class TextTool extends BaseTool {
       const x = parseFloat(this.inputEl.dataset.canvasX);
       const y = parseFloat(this.inputEl.dataset.canvasY);
       const ctx = canvas.getMainCtx();
+      const scale = canvas.getScale();
       const fontSize = state.getToolOption('text', 'fontSize');
       const fontFamily = state.getToolOption('text', 'fontFamily');
       const color = state.getToolOption('text', 'color');
 
-      ctx.font = `${fontSize}px ${fontFamily}`;
+      ctx.font = `${fontSize * scale}px ${fontFamily}`;
       ctx.fillStyle = color;
       ctx.textBaseline = 'top';
       ctx.fillText(text, x, y);

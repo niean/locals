@@ -28,7 +28,8 @@ class MosaicTool extends BaseTool {
   }
 
   _applyMosaic(cx, cy) {
-    const blockSize = state.getToolOption('mosaic', 'size');
+    const scale = canvas.getScale();
+    const blockSize = Math.max(1, Math.round(state.getToolOption('mosaic', 'size') * scale));
     const ctx = canvas.getMainCtx();
     const c = canvas.getMainCanvas();
     const radius = blockSize * 2;
