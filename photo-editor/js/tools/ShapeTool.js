@@ -62,6 +62,8 @@ class ShapeTool extends BaseTool {
       );
     } else if (shapeType === 'arrow') {
       this._drawArrow(ctx, x1, y1, x2, y2, lineWidth);
+    } else if (shapeType === 'ellipse') {
+      this._drawEllipse(ctx, x1, y1, x2, y2);
     }
   }
 
@@ -88,27 +90,61 @@ class ShapeTool extends BaseTool {
     ctx.fill();
   }
 
+  _drawEllipse(ctx, x1, y1, x2, y2) {
+    const centerX = (x1 + x2) / 2;
+    const centerY = (y1 + y2) / 2;
+    const radiusX = Math.abs(x2 - x1) / 2;
+    const radiusY = Math.abs(y2 - y1) / 2;
+
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
   renderPropertyBar(container) {
     const shapeType = state.getToolOption('shape', 'type');
     const color = state.getToolOption('shape', 'color');
     const lineWidth = state.getToolOption('shape', 'lineWidth');
+
     container.innerHTML = `
       <label class="c-property-bar__label">类型</label>
-      <select id="shapeType">
-        <option value="arrow" ${shapeType === 'arrow' ? 'selected' : ''}>箭头</option>
-        <option value="rect" ${shapeType === 'rect' ? 'selected' : ''}>矩形</option>
-      </select>
+      <button class="c-property-bar__type-btn ${shapeType === 'arrow' ? 'is-active' : ''}" data-type="arrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14"/>
+          <path d="M12 5l7 7-7 7"/>
+        </svg>
+        <span>箭头</span>
+      </button>
+      <button class="c-property-bar__type-btn ${shapeType === 'rect' ? 'is-active' : ''}" data-type="rect">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="4" width="16" height="16"/>
+        </svg>
+        <span>矩形</span>
+      </button>
+      <button class="c-property-bar__type-btn ${shapeType === 'ellipse' ? 'is-active' : ''}" data-type="ellipse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <ellipse cx="12" cy="12" rx="9" ry="7"/>
+        </svg>
+        <span>圆形</span>
+      </button>
+      <div class="c-property-bar__divider"></div>
       <label class="c-property-bar__label">颜色</label>
       <input type="color" id="shapeColor" value="${color}">
       <label class="c-property-bar__label">线宽</label>
       <input type="number" id="shapeLineWidth" value="${lineWidth}" min="1" max="20">
     `;
-    container.querySelector('#shapeType').addEventListener('change', (e) => {
-      state.setToolOption('shape', 'type', e.target.value);
+
+    container.querySelectorAll('.c-property-bar__type-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.setToolOption('shape', 'type', btn.dataset.type);
+        this.renderPropertyBar(container);
+      });
     });
+
     container.querySelector('#shapeColor').addEventListener('input', (e) => {
       state.setToolOption('shape', 'color', e.target.value);
     });
+
     container.querySelector('#shapeLineWidth').addEventListener('change', (e) => {
       state.setToolOption('shape', 'lineWidth', parseInt(e.target.value, 10));
     });

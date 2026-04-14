@@ -37,6 +37,10 @@ digraph when_to_use {
 - Two-stage review after each task: spec compliance first, then code quality
 - Faster iteration (no human-in-loop between tasks)
 
+## Input Parameters
+
+- model（可选）：调用方指定的 LLM 模型名称（如 opus、sonnet）；指定时所有 subagent 分派使用此模型，覆盖 Model Selection 节的复杂度策略；未指定时按 Model Selection 节的复杂度策略选择模型；指定模型不可用时回退到复杂度策略
+
 ## The Process
 
 ```dot
@@ -48,7 +52,7 @@ digraph process {
         "Dispatch implementer subagent (./implementer-prompt.md)" [shape=box];
         "Implementer subagent asks questions?" [shape=diamond];
         "Answer questions, provide context" [shape=box];
-        "Implementer subagent implements, tests, commits, self-reviews" [shape=box];
+        "Implementer subagent implements, tests, self-reviews" [shape=box];
         "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [shape=box];
         "Spec reviewer subagent confirms code matches spec?" [shape=diamond];
         "Implementer subagent fixes spec gaps" [shape=box];
@@ -60,15 +64,14 @@ digraph process {
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
     "More tasks remain?" [shape=diamond];
-    "[FINAL_REVIEW_STEP]" [shape=box label="[FINAL_REVIEW_STEP]\nDispatch final code reviewer\n(skip if caller manages review externally)"];
-    "Use .harness/skills/superpowers/finishing-a-development-branch.md" [shape=box style=filled fillcolor=lightgreen];
+    "Announce completion" [shape=box style=filled fillcolor=lightgreen];
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
-    "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, commits, self-reviews" [label="no"];
-    "Implementer subagent implements, tests, commits, self-reviews" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)";
+    "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, self-reviews" [label="no"];
+    "Implementer subagent implements, tests, self-reviews" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)";
     "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" -> "Spec reviewer subagent confirms code matches spec?";
     "Spec reviewer subagent confirms code matches spec?" -> "Implementer subagent fixes spec gaps" [label="no"];
     "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (./spec-reviewer-prompt.md)" [label="re-review"];
@@ -79,8 +82,7 @@ digraph process {
     "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
     "Mark task complete in TodoWrite" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
-    "More tasks remain?" -> "[FINAL_REVIEW_STEP]" [label="no"];
-    "[FINAL_REVIEW_STEP]" -> "Use .harness/skills/superpowers/finishing-a-development-branch.md";
+    "More tasks remain?" -> "Announce completion" [label="no"];
 }
 ```
 
@@ -132,9 +134,9 @@ You: I'm using Subagent-Driven Development to execute this plan.
 [Extract all 5 tasks with full text and context]
 [Create TodoWrite with all tasks]
 
-Task 1: Hook installation script
+T 1: Hook installation script
 
-[Get Task 1 text and context (already extracted)]
+[Get T 1 text and context (already extracted)]
 [Dispatch implementation subagent with full task text + context]
 
 Implementer: "Before I begin - should the hook be installed at user or system level?"
@@ -146,7 +148,6 @@ Implementer: "Got it. Implementing now..."
   - Implemented install-hook command
   - Added tests, 5/5 passing
   - Self-review: Found I missed --force flag, added it
-  - Committed
 
 [Dispatch spec compliance reviewer]
 Spec reviewer: ✅ Spec compliant - all requirements met, nothing extra
@@ -154,11 +155,11 @@ Spec reviewer: ✅ Spec compliant - all requirements met, nothing extra
 [Get git SHAs, dispatch code quality reviewer]
 Code reviewer: Strengths: Good test coverage, clean. Issues: None. Approved.
 
-[Mark Task 1 complete]
+[Mark T 1 complete]
 
-Task 2: Recovery modes
+T 2: Recovery modes
 
-[Get Task 2 text and context (already extracted)]
+[Get T 2 text and context (already extracted)]
 [Dispatch implementation subagent with full task text + context]
 
 Implementer: [No questions, proceeds]
@@ -166,7 +167,6 @@ Implementer:
   - Added verify/repair modes
   - 8/8 tests passing
   - Self-review: All good
-  - Committed
 
 [Dispatch spec compliance reviewer]
 Spec reviewer: ❌ Issues:
@@ -188,13 +188,11 @@ Implementer: Extracted PROGRESS_INTERVAL constant
 [Code reviewer reviews again]
 Code reviewer: ✅ Approved
 
-[Mark Task 2 complete]
+[Mark T 2 complete]
 
 ...
 
 [After all tasks]
-[FINAL_REVIEW_STEP: Dispatch final code-reviewer OR skip if caller manages review externally]
-Final reviewer: All requirements met, ready to merge
 
 Done!
 ```
@@ -234,7 +232,6 @@ Done!
 ## Red Flags
 
 **Never:**
-- Start implementation on main/master branch without explicit user consent
 - Skip reviews (spec compliance OR code quality)
 - Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
@@ -264,14 +261,12 @@ Done!
 
 ## Integration
 
-**Required workflow skills:**
-- **.harness/skills/superpowers/using-git-worktrees.md** - REQUIRED: Set up isolated workspace before starting
-- **.harness/skills/superpowers/writing-plans.md** - Creates the plan this skill executes
-- **.harness/skills/superpowers/requesting-code-review.md** - Code review template for reviewer subagents
-- **.harness/skills/superpowers/finishing-a-development-branch.md** - Complete development after all tasks
+**Related skills:**
+- **.harness/framework/skills/superpowers/writing-plans.md** - Creates the plan this skill executes
+- **.harness/framework/skills/superpowers/requesting-code-review.md** - Code review template for reviewer subagents
 
 **Subagents should use:**
-- **.harness/skills/superpowers/test-driven-development.md** - Subagents follow TDD for each task
+- **.harness/framework/skills/superpowers/test-driven-development.md** - Subagents follow TDD for each task
 
 **Alternative workflow:**
-- **.harness/skills/superpowers/executing-plans.md** - Use for parallel session instead of same-session execution
+- **.harness/framework/skills/superpowers/executing-plans.md** - Use for parallel session instead of same-session execution

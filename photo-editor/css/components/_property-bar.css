@@ -104,3 +104,36 @@
   height: 20px;
   background-color: var(--color-border);
 }
+
+.c-property-bar__type-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 6px var(--space-sm);
+  border: none;
+  border-radius: var(--border-radius);
+  background-color: var(--color-surface-hover);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.c-property-bar__type-btn:hover {
+  background-color: var(--color-border);
+}
+
+.c-property-bar__type-btn.is-active {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+.c-property-bar__type-btn.is-active:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.c-property-bar__type-btn svg {
+  width: 16px;
+  height: 16px;
+}

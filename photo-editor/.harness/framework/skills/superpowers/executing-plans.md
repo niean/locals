@@ -11,17 +11,17 @@ Load plan, review critically, execute all tasks, report when complete.
 
 **Announce at start:** "I'm using the executing-plans skill to implement this plan."
 
-**Note:** Tell your human partner that Superpowers works much better with access to subagents. The quality of its work will be significantly higher if run on a platform with subagent support (such as Claude Code or Codex). If subagents are available, use .harness/skills/superpowers/subagent-driven-development.md instead of this skill.
+**Note:** Tell your human partner that Superpowers works much better with access to subagents. The quality of its work will be significantly higher if run on a platform with subagent support (such as Claude Code or Codex). If subagents are available, use .harness/framework/skills/superpowers/subagent-driven-development.md instead of this skill.
 
 ## The Process
 
-### Step 1: Load and Review Plan
+### S 1: Load and Review Plan
 1. Read plan file
 2. Review critically - identify any questions or concerns about the plan
 3. If concerns: Raise them with your human partner before starting
 4. If no concerns: Create TodoWrite and proceed
 
-### Step 2: Execute Tasks
+### S 2: Execute Tasks
 
 For each task:
 1. Mark as in_progress
@@ -29,12 +29,11 @@ For each task:
 3. Run verifications as specified
 4. Mark as completed
 
-### Step 3: Complete Development
+### S 3: Complete Development
 
 After all tasks complete and verified:
-- Announce: "I'm using the finishing-a-development-branch skill to complete this work."
-- **REQUIRED SUB-SKILL:** Use .harness/skills/superpowers/finishing-a-development-branch.md
-- Follow that skill to verify tests, present options, execute choice
+- Announce completion and summarize what was done
+- The caller decides how to handle post-implementation workflow (review, merge, etc.)
 
 ## When to Stop and Ask for Help
 
@@ -48,7 +47,7 @@ After all tasks complete and verified:
 
 ## When to Revisit Earlier Steps
 
-**Return to Review (Step 1) when:**
+**Return to Review (S 1) when:**
 - Partner updates the plan based on your feedback
 - Fundamental approach needs rethinking
 
@@ -60,11 +59,7 @@ After all tasks complete and verified:
 - Don't skip verifications
 - Reference skills when plan says to
 - Stop when blocked, don't guess
-- Never start implementation on main/master branch without explicit user consent
-
 ## Integration
 
-**Required workflow skills:**
-- **.harness/skills/superpowers/using-git-worktrees.md** - REQUIRED: Set up isolated workspace before starting
-- **.harness/skills/superpowers/writing-plans.md** - Creates the plan this skill executes
-- **.harness/skills/superpowers/finishing-a-development-branch.md** - Complete development after all tasks
+**Related skills:**
+- **.harness/framework/skills/superpowers/writing-plans.md** - Creates the plan this skill executes

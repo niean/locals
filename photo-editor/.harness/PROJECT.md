@@ -22,6 +22,7 @@ PhotoEditor -- 本地化图片编辑器，纯 HTML+CSS+JS 实现。由于使用 
 | 任务类型 | 必读（完整读取） | 按需读取 |
 |---------|----------------|---------|
 | 功能需求 | .harness/knowledge/01-overview.md, .harness/knowledge/02-architecture.md, .harness/knowledge/22-file-map.md, .harness/prd/01-prd-sense.md, .harness/prd/02-prd-baseline.md | .harness/knowledge/03-conventions.md, .harness/knowledge/04-data-boundaries.md, .harness/knowledge/05-key-patterns.md, .harness/knowledge/21-glossary.md |
+| 精调功能 | .harness/knowledge/01-overview.md, .harness/knowledge/22-file-map.md | .harness/knowledge/03-conventions.md, .harness/knowledge/05-key-patterns.md |
 | Bug修复 | .harness/knowledge/01-overview.md, .harness/knowledge/03-conventions.md, .harness/knowledge/22-file-map.md | .harness/knowledge/02-architecture.md, .harness/knowledge/04-data-boundaries.md, .harness/knowledge/05-key-patterns.md, .harness/knowledge/21-glossary.md |
 | 治理/扫描 | .harness/knowledge/01-overview.md, .harness/knowledge/03-conventions.md, .harness/knowledge/22-file-map.md | .harness/knowledge/02-architecture.md, .harness/knowledge/05-key-patterns.md |
 | 文档维护 | .harness/knowledge/01-overview.md, .harness/knowledge/22-file-map.md | 读取目标文件引用链上的 knowledge/ 和 prd/ 文件 |
@@ -172,7 +173,7 @@ locals/                -- 本地敏感配置
 ```
 Layer 0   AGENTS.md -> FRAMEWORK.md（通用规范+注册表） + PROJECT.md（项目配置+规则摘要）
 Layer 1   framework/agents/（5个角色: Orchestrator/Designer/Planner/Coder/Reviewer）
-Layer 1.5 framework/workflows/（迭代功能/修复Bug/迭代文档 + harness-ops/治理类）
+Layer 1.5 framework/workflows/（迭代功能/精调功能/修复Bug/迭代文档 + harness-ops/治理类）
 Layer 2   framework/skills/（harness/ 核心Skill + harness-ops/ 运维Skill + superpowers/ 方法论）
 Layer 3   framework/skills/harness/subskills/（扫描模板）
 数据层    knowledge/（权威知识） + prd/（产品文档，AI只读） + guides/（方法论） + lessons/（教训）
