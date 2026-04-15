@@ -7,6 +7,7 @@ import BrushTool from './tools/BrushTool.js';
 import TextTool from './tools/TextTool.js';
 import MosaicTool from './tools/MosaicTool.js';
 import ShapeTool from './tools/ShapeTool.js';
+import FilterTool from './tools/FilterTool.js';
 
 const tools = {
   crop: new CropTool(),
@@ -14,6 +15,7 @@ const tools = {
   text: new TextTool(),
   mosaic: new MosaicTool(),
   shape: new ShapeTool(),
+  filter: new FilterTool(),
 };
 
 let activeTool = null;

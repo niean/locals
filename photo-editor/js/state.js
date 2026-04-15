@@ -13,6 +13,7 @@ const state = {
     text: { fontSize: 24, color: '#000000', fontFamily: 'Arial' },
     shape: { type: 'arrow', color: '#ff0000', lineWidth: 2 },
     mosaic: { size: 10 },
+    filter: { preset: 'original' },
   },
 };
 

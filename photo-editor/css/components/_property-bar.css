@@ -133,7 +133,40 @@
   background-color: var(--color-primary-hover);
 }
 
-.c-property-bar__type-btn svg {
-  width: 16px;
-  height: 16px;
+/* 滤镜预设按钮组 */
+.c-property-bar__filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
+
+.c-property-bar__filter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid var(--color-border);
+  border-radius: 50%;
+  background-color: var(--color-surface);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.c-property-bar__filter-btn:hover {
+  border-color: var(--color-text-secondary);
+}
+
+.c-property-bar__filter-btn.is-active {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.c-property-bar__filter-btn__label {
+  font-size: 9px;
+  color: #fff;
+  line-height: 1;
+  white-space: nowrap;
+}
+

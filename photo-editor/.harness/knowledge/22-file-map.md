@@ -26,5 +26,7 @@
 | js/tools/TextTool.js | 文字工具 |
 | js/tools/MosaicTool.js | 马赛克工具 |
 | js/tools/ShapeTool.js | 形状工具 |
+| js/tools/FilterTool.js | 滤镜工具（属性栏渲染、滤镜应用、原始图片还原） |
 | js/utils/file.js | 文件加载/下载 |
 | js/utils/math.js | 数学工具函数 |
+| js/utils/filter.js | 滤镜像素处理函数（鲜明/暖色/冷色/单色/戏剧效果） |
