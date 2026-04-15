@@ -44,7 +44,9 @@ function getExtension(mimeType) {
 function extractFileName(file) {
   const name = file.name || '';
   const dotIndex = name.lastIndexOf('.');
-  return dotIndex > 0 ? name.substring(0, dotIndex) : name || 'photo-edit';
+  const baseName = dotIndex > 0 ? name.substring(0, dotIndex) : name;
+  const cleaned = baseName.replace(/[\s\u00A0\u200B-\u200D\uFEFF]/g, '');
+  return cleaned || 'photo-edit';
 }
 
 export { loadImageFromFile, downloadCanvas, getMimeType, getExtension, extractFileName };

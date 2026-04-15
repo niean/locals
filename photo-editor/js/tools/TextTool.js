@@ -32,21 +32,24 @@ class TextTool extends BaseTool {
     const cssY = y * (rect.height / overlay.height);
     const cssFontSize = state.getToolOption('text', 'fontSize');
 
-    const input = document.createElement('input');
-    input.type = 'text';
+    // Create a contenteditable div so text renders identically to canvas text
+    // (unlike <input> which has its own internal positioning)
+    const input = document.createElement('div');
+    input.contentEditable = 'true';
     input.className = 'c-canvas-area__text-input';
     input.style.cssText = `
       position: absolute;
       left: ${cssX}px;
-      top: ${cssY - 14}px;
+      top: ${cssY}px;
       font-size: ${cssFontSize}px;
       font-family: ${state.getToolOption('text', 'fontFamily')};
       color: ${state.getToolOption('text', 'color')};
       background: transparent;
-      border: 1px dashed rgba(255,255,255,0.5);
-      outline: none;
-      padding: 2px 4px;
+      outline: 1px dashed rgba(255,255,255,0.5);
+      padding: 0;
       min-width: 100px;
+      line-height: 1;
+      white-space: pre;
       z-index: 100;
     `;
 
@@ -54,22 +57,52 @@ class TextTool extends BaseTool {
     input.dataset.canvasY = y;
 
     container.appendChild(input);
-    input.focus();
+
+    // Delay focus to next event loop tick, avoiding mousedown event stream
+    setTimeout(() => input.focus(), 0);
 
     input.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter') {
+      if (ev.key === 'Enter' && !ev.shiftKey) {
+        ev.preventDefault();
         this._commitText();
       } else if (ev.key === 'Escape') {
         this._removeInput();
       }
     });
 
+    // Update canvas text live as user types
+    input.addEventListener('input', () => {
+      this._renderPreview();
+    });
+
     this.inputEl = input;
+  }
+
+  _renderPreview() {
+    if (!this.inputEl) return;
+    const overlay = canvas.getOverlayCanvas();
+    const ctx = overlay.getContext('2d');
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+    const text = this.inputEl.textContent;
+    if (!text) return;
+
+    const x = parseFloat(this.inputEl.dataset.canvasX);
+    const y = parseFloat(this.inputEl.dataset.canvasY);
+    const scale = canvas.getScale();
+    const fontSize = state.getToolOption('text', 'fontSize');
+    const fontFamily = state.getToolOption('text', 'fontFamily');
+    const color = state.getToolOption('text', 'color');
+
+    ctx.font = `${fontSize * scale}px ${fontFamily}`;
+    ctx.fillStyle = color;
+    ctx.textBaseline = 'top';
+    ctx.fillText(text, x, y);
   }
 
   _commitText() {
     if (!this.inputEl) return;
-    const text = this.inputEl.value.trim();
+    const text = this.inputEl.textContent.trim();
     if (text) {
       const x = parseFloat(this.inputEl.dataset.canvasX);
       const y = parseFloat(this.inputEl.dataset.canvasY);
@@ -85,6 +118,9 @@ class TextTool extends BaseTool {
       ctx.fillText(text, x, y);
       history.push();
     }
+    // Clear overlay preview
+    const overlay = canvas.getOverlayCanvas();
+    overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
     this._removeInput();
   }
 

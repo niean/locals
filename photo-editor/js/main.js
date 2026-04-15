@@ -156,7 +156,7 @@ function setupFileHandling() {
     const selectedFormat = formatSelect.value;
     const mimeType = selectedFormat || state.get('imageType') || 'image/png';
     const ext = getExtension(mimeType);
-    const fileName = state.get('imageFileName') || 'photo-edit';
+    const fileName = (state.get('imageFileName') || 'photo-edit').replace(/[\s\u00A0\u200B-\u200D\uFEFF]/g, '');
     downloadCanvas(mainC, `${fileName}.${ext}`, mimeType);
   }
 }
