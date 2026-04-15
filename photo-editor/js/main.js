@@ -62,11 +62,21 @@ function switchTool(toolName) {
 }
 
 function setupToolbar() {
-  document.getElementById('toolbar').addEventListener('click', (e) => {
+  const toolbar = document.getElementById('toolbar');
+
+  toolbar.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-tool]');
     if (!btn) return;
     switchTool(btn.dataset.tool);
   });
+
+  // 工具栏展开/收起切换
+  const toggleBtn = document.getElementById('btnToolbarToggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      toolbar.classList.toggle('is-expanded');
+    });
+  }
 }
 
 function updatePropertyBar() {

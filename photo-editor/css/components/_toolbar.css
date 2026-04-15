@@ -10,6 +10,7 @@
   padding: var(--space-sm) 0;
   gap: var(--space-xs);
   overflow: visible;
+  transition: width 0.2s ease;
 }
 
 .c-toolbar__btn {
@@ -66,4 +67,75 @@
   height: 1px;
   background-color: var(--color-border);
   margin: var(--space-xs) 0;
+}
+
+/* 展开状态 */
+.c-toolbar.is-expanded {
+  width: var(--toolbar-expanded-width);
+  align-items: stretch;
+  padding: var(--space-sm) var(--space-sm);
+}
+
+.c-toolbar.is-expanded .c-toolbar__btn {
+  justify-content: flex-start;
+  padding: 0 var(--space-md);
+  width: auto;
+}
+
+.c-toolbar.is-expanded .c-toolbar__toggle {
+  justify-content: flex-start;
+  padding: 0 var(--space-md);
+  width: auto;
+}
+
+.c-toolbar__label {
+  display: none;
+}
+
+.c-toolbar.is-expanded .c-toolbar__label {
+  display: inline;
+  margin-left: var(--space-sm);
+  font-size: var(--font-size-md);
+}
+
+.c-toolbar.is-expanded .c-toolbar__separator {
+  margin: var(--space-xs) var(--space-sm);
+}
+
+.c-toolbar.is-expanded .c-toolbar__toggle {
+  color: var(--color-text-secondary);
+}
+
+/* 展开状态下禁用 tooltip */
+.c-toolbar.is-expanded .c-toolbar__btn::after {
+  display: none;
+}
+
+/* 切换按钮 */
+.c-toolbar__toggle {
+  width: 36px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  transition: background-color var(--transition-fast);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.c-toolbar__toggle:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.c-toolbar__toggle svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
+/* 展开时切换箭头方向 */
+.c-toolbar.is-expanded .c-toolbar__toggle svg {
+  transform: rotate(180deg);
 }

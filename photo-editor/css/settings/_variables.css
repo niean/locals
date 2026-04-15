@@ -21,6 +21,7 @@
 
   /* 尺寸 */
   --toolbar-width: 48px;
+  --toolbar-expanded-width: 140px;
   --property-bar-height: 44px;
   --icon-size: 20px;
   --border-radius: 4px;
