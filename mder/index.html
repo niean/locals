@@ -605,6 +605,19 @@
         document.getElementById('openFileBtn').addEventListener('click', openFileWithAPI);
         document.getElementById('fileInput').addEventListener('change', handleFileSelect);
         document.querySelector('.empty-state').addEventListener('click', openFileWithAPI);
+
+        // 点击工作区任何地方触发文件加载/重新加载
+        document.querySelector('.output-section').addEventListener('click', (e) => {
+            const tag = e.target.tagName.toLowerCase();
+            const isInteractive = ['a', 'button', 'input', 'select', 'textarea'].includes(tag)
+                || e.target.closest('button')
+                || e.target.closest('a')
+                || e.target.isContentEditable;
+            if (!isInteractive) {
+                e.preventDefault();
+                openFileWithAPI();
+            }
+        });
         })();
     </script>
 </body>

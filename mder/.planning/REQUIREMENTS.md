@@ -87,8 +87,8 @@
 | NFR-01 | Phase 0 (Existing) | Complete |
 | NFR-02 | Phase 0 (Existing) | Complete |
 | NFR-03 | Phase 0 (Existing) | Complete |
-| GOV-01 | Phase 1 | Pending |
-| GOV-02 | Phase 1 | Pending |
+| GOV-01 | Phase 1 | Complete |
+| GOV-02 | Phase 1 | Complete |
 | ENH-01 | Phase 2 | Pending |
 
 **Coverage:**
