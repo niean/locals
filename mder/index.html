@@ -114,6 +114,7 @@
            ========================================================================== */
 
         .output-section {
+            position: relative;
             padding: 30px;
             flex: 1;
             display: flex;
@@ -283,12 +284,21 @@
            ========================================================================== */
 
         .empty-state {
-            text-align: center;
-            padding: 60px 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
             color: #6c757d;
             cursor: pointer;
             transition: background-color 0.2s ease;
             border-radius: 8px;
+            text-align: center;
         }
 
         .empty-state:hover {
@@ -606,18 +616,6 @@
         document.getElementById('fileInput').addEventListener('change', handleFileSelect);
         document.querySelector('.empty-state').addEventListener('click', openFileWithAPI);
 
-        // 点击工作区任何地方触发文件加载/重新加载
-        document.querySelector('.output-section').addEventListener('click', (e) => {
-            const tag = e.target.tagName.toLowerCase();
-            const isInteractive = ['a', 'button', 'input', 'select', 'textarea'].includes(tag)
-                || e.target.closest('button')
-                || e.target.closest('a')
-                || e.target.isContentEditable;
-            if (!isInteractive) {
-                e.preventDefault();
-                openFileWithAPI();
-            }
-        });
         })();
     </script>
 </body>

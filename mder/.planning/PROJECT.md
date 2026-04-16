@@ -25,8 +25,16 @@
 
 ### Active
 
-- [ ] 代码治理：按 Airbnb JS 风格 + ITCSS/BEM CSS 规范改造现有代码
-- [ ] 渲染增强：改善 Markdown 渲染质量与排版体验
+- [ ] 代码治理：按 Airbnb JS 风格 + ITCSS/BEM CSS 规范改造现有代码（Phase 1, Complete）
+- [ ] 渲染增强：改善 Markdown 渲染质量与排版体验（Phase 2, v1.0）
+
+## Current Milestone: v1.1 Empty-state Interaction
+
+**Goal:** 优化 empty-state 点击行为与工作区居中布局。
+
+**Target features:**
+- Click-only-on-empty-state：仅点击 empty-state 区域触发文件选择器，点击其它区域不触发
+- Centered-layout：empty-state 置于工作区中部
 
 ### Out of Scope
 

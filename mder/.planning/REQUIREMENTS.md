@@ -52,6 +52,13 @@
 
 - **ENH-01**: 改善 Markdown 渲染质量与排版体验
 
+## v1.1 Requirements
+
+### Empty State
+
+- [x] **ES-01**: 仅点击 empty-state 区域触发文件选择器，点击工作区其它区域不触发
+- [x] **ES-02**: empty-state 居中显示在工作区中部
+
 ## Out of Scope
 
 | Feature | Reason |
@@ -93,10 +100,11 @@
 
 **Coverage:**
 - v1 requirements: 21 total (all Complete)
-- v2 requirements: 3 total (mapped to phases)
+- v2 requirements: 3 total (GOV-01, GOV-02 Complete; ENH-01 Pending)
+- v1.1 requirements: 2 total (defining)
 - Unmapped: 0 (all mapped)
 
 ---
 
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-04-15 after roadmap initialization*
+*Last updated: 2026-04-16 — v1.1 added*

@@ -1,0 +1,2 @@
+# GSD.md
+@.planning

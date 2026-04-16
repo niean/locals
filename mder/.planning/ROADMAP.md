@@ -2,13 +2,14 @@
 
 **Version:** v2
 **Date:** 2026-04-15
-**Phases:** 2 (plus Phase 0 baseline)
+**Phases:** 3 (plus Phase 0 baseline)
 **Granularity:** coarse
 
 ## Phases
 
 - [x] **Phase 1: Code Governance** - Refactor JS/CSS to follow Airbnb style + ITCSS/BEM conventions (completed 2026-04-16)
-- [ ] **Phase 2: Render Enhancement** - Improve markdown rendering quality and layout experience
+- [ ] **Phase 2: Render Enhancement** - Improve markdown rendering quality and layout experience (v1.0)
+- [x] **Phase 3: Empty State** - Refine empty-state click behavior and centered layout (v1.1) (completed 2026-04-16)
 
 ## Phase Details
 
@@ -42,15 +43,26 @@ Plans:
 **Plans:** TBD
 **UI hint:** yes
 
+### Phase 3: Empty State
+**Goal:** Refine empty-state click behavior and centered layout
+**Depends on:** Phase 1 (clean codebase)
+**Requirements:** ES-01, ES-02
+**Success Criteria** (what must be TRUE):
+  1. Clicking empty-state area opens file picker
+  2. Clicking non-empty-state areas in workspace does NOT open file picker
+  3. Empty-state visually centered in the workspace area
+**Plans:** 1/1 plans complete
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 0. Baseline | - | Complete | FILE-01..NFR-03 (21 reqs) |
 | 1. Code Governance | 1/1 | Complete    | 2026-04-16 |
-| 2. Render Enhancement | 0/TBD | Not started | - |
+| 2. Render Enhancement | 0/TBD | Not started (v1.0) | - |
+| 3. Empty State | 1/1 | Complete    | 2026-04-16 |
 
 ---
 
 *Roadmap defined: 2026-04-15*
-*Last updated: 2026-04-15 after plan creation*
+*Last updated: 2026-04-16 — Phase 3 added (v1.1)*
