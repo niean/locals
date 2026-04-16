@@ -389,6 +389,7 @@
             },
             breaks: true,
             gfm: true,
+            html: false,
         });
 
         // 保存当前文件的句柄和路径信息
@@ -544,6 +545,7 @@
                             return;
                         }
                     } catch (e) {
+                        console.warn('fetch fallback failed:', e.message);
                         // fetch 失败，继续尝试其他方式
                     }
                 }
