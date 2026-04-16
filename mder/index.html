@@ -330,32 +330,39 @@
             border-top: 1px solid #e9ecef;
             text-align: right;
         }
+
+        /* ==========================================================================
+           Components - Utility
+           ========================================================================== */
+
+        .is-hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <div class="header__content">
-                <h1 class="header__title">📝 MD文件渲染工具</h1>
+                <h1 class="header__title">MD文件渲染工具</h1>
             </div>
             <div class="header__actions">
-                <button class="header__action-btn" id="reloadFileBtn" style="display: none;">
-                    🔄 重新加载
+                <button class="header__action-btn is-hidden" id="reloadFileBtn">
+                    重新加载
                 </button>
                 <button class="header__action-btn" id="openFileBtn">
-                    📁 打开文件
+                    打开文件
                 </button>
             </div>
         </div>
 
-        <input type="file" id="fileInput" accept=".md,.markdown,.txt" style="display: none;">
+        <input type="file" id="fileInput" class="is-hidden" accept=".md,.markdown,.txt">
 
         <div class="output-section">
             <div id="errorContainer"></div>
             <div id="markdownOutput" class="markdown-content">
                 <div class="empty-state">
-                    <div class="empty-state__icon">📄</div>
-                    <div class="empty-state__text">请点击右上角的"打开文件"按钮选择 Markdown 文件</div>
+                    <div class="empty-state__text">点击此处或右上角的"打开文件"按钮选择 Markdown 文件</div>
                 </div>
             </div>
             <div class="file-info" id="fileInfo"></div>
@@ -363,7 +370,10 @@
     </div>
 
     <script>
-        // 文件大小单位常量
+        (function() {
+            'use strict';
+
+            // 文件大小单位常量
         const BYTES_PER_KB = 1024;
         const BYTES_PER_MB = 1024 * 1024;
 
@@ -389,7 +399,7 @@
         // 显示错误信息
         const showError = (message) => {
             const errorContainer = document.getElementById('errorContainer');
-            errorContainer.innerHTML = `<div class="error-message">❌ ${message}</div>`;
+            errorContainer.innerHTML = `<div class="error-message">错误：${message}</div>`;
         };
 
         // 清除错误信息
@@ -401,7 +411,7 @@
         const toggleReloadButton = (show) => {
             const reloadBtn = document.getElementById('reloadFileBtn');
             if (reloadBtn) {
-                reloadBtn.style.display = show ? 'block' : 'none';
+                reloadBtn.classList.toggle('is-hidden', !show);
             }
         };
 
@@ -593,6 +603,7 @@
         document.getElementById('openFileBtn').addEventListener('click', openFileWithAPI);
         document.getElementById('fileInput').addEventListener('change', handleFileSelect);
         document.querySelector('.empty-state').addEventListener('click', openFileWithAPI);
+        })();
     </script>
 </body>
 </html>
