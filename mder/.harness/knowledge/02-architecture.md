@@ -1,4 +1,4 @@
-<!-- SUMMARY: 单文件架构，index.html包含全部HTML/CSS/JS（JS:Airbnb Style, CSS:ITCSS+BEM），lib/目录存放第三方压缩库 -->
+<!-- SUMMARY: 单文件架构，index.html包含全部HTML/CSS/JS（JS:Airbnb Style, CSS:ITCSS+BEM），lib/目录存放marked/highlight/Mermaid等第三方压缩库 -->
 # 架构与模块边界
 
 ## 分层
@@ -8,7 +8,7 @@ mder采用单文件架构，无传统意义上的分层：
 - 视图层（HTML）：index.html中的DOM结构，包括header、文件选择区、渲染输出区、文件信息栏
 - 样式层（CSS）：index.html中的style标签，遵循ITCSS架构（Generic/Elements/Components分层）+ BEM命名
 - 逻辑层（JS）：index.html中的script标签，遵循Airbnb JavaScript Style Guide，包含文件操作、Markdown渲染、UI交互
-- 依赖层（lib/）：第三方压缩库文件（marked.min.js、highlight.min.js、github.min.css）
+- 依赖层（lib/）：第三方压缩库文件（marked.min.js、highlight.min.js、mermaid.min.js、github.min.css）
 
 ## 模块边界
 

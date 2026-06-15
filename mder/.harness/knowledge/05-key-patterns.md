@@ -1,4 +1,4 @@
-<!-- SUMMARY: 核心模式：文件API降级策略、Markdown渲染管线、错误处理链、重新加载多策略回退 -->
+<!-- SUMMARY: 核心模式：文件API降级策略、Markdown渲染管线、Mermaid二次渲染、错误处理链、重新加载多策略回退 -->
 # 关键代码模式
 
 项目中反复出现但不易从单个文件推断的模式，供新功能实现时参照。
@@ -16,12 +16,22 @@
 文件内容到页面展示的完整流程：
 1. readFile() -- FileReader.readAsText读取UTF-8文本
 2. renderMarkdown() -- 接收内容和文件元信息
-3. marked.parse(content) -- Markdown转HTML
-4. highlight.js -- 在marked的highlight回调中对代码块着色
+3. marked.parse(content) -- Markdown转HTML，markedRenderer.code识别mermaid代码块并输出图表容器
+4. highlight.js -- 对非mermaid代码块着色
 5. innerHTML赋值 -- 将HTML插入DOM
-6. 更新文件信息栏 -- 显示路径/行数/大小/时间
+6. renderMermaidDiagrams() -- Mermaid库存在时对当前输出区的.mermaid节点二次渲染
+7. 更新文件信息栏 -- 显示路径/行数/大小/时间
 
-## 模式三：重新加载的多策略回退
+## 模式三：Mermaid二次渲染
+
+Mermaid图表渲染遵循后处理模式：
+1. marked renderer先将```mermaid代码块输出为`<pre class="mermaid">`
+2. renderMarkdown()插入HTML后调用renderMermaidDiagrams(markdownOutput)
+3. renderMermaidDiagrams()首次运行时初始化window.mermaid，设置startOnLoad: false
+4. 对当前渲染区内的.mermaid节点执行window.mermaid.run()
+5. Mermaid库缺失时直接跳过，保留源码容器，避免页面崩溃
+
+## 模式四：重新加载的多策略回退
 
 reloadFile()按优先级尝试多种方式：
 1. 有fileHandle -> 直接通过handle.getFile()重新读取
@@ -29,7 +39,7 @@ reloadFile()按优先级尝试多种方式：
 3. 有filePath -> 尝试fetch请求
 4. 都失败 -> 提示用户手动重新选择文件
 
-## 模式四：错误处理与用户反馈
+## 模式五：错误处理与用户反馈
 
 统一的错误处理模式：
 1. showError(message) 在页面顶部显示红色错误卡片

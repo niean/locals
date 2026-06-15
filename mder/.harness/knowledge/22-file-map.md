@@ -1,4 +1,4 @@
-<!-- SUMMARY: mder文件映射：index.html（全部应用逻辑）、lib/（第三方库），共4个文件 -->
+<!-- SUMMARY: mder文件映射：index.html（全部应用逻辑）、lib/（第三方库），共5个文件 -->
 # 功能与文件映射
 
 ## 主应用
@@ -25,6 +25,7 @@
 | 渲染Markdown为HTML | index.html | renderMarkdown() |
 | Markdown解析 | lib/marked.min.js | marked.parse() |
 | 代码语法高亮 | lib/highlight.min.js | hljs.highlight() / hljs.highlightAuto() |
+| Mermaid图表渲染 | lib/mermaid.min.js | mermaid.initialize() / mermaid.run() |
 | 代码高亮样式 | lib/github.min.css | CSS样式 |
 
 ## UI交互

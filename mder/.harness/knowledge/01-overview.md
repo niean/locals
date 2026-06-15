@@ -1,4 +1,4 @@
-<!-- SUMMARY: mder是浏览器端Markdown渲染工具，纯前端单HTML文件架构，使用marked.js+highlight.js，通过File System Access API打开文件 -->
+<!-- SUMMARY: mder是浏览器端Markdown渲染工具，纯前端单HTML文件架构，使用marked.js+highlight.js+Mermaid，通过File System Access API打开文件 -->
 # 项目概览
 
 ## 一句话
@@ -10,6 +10,7 @@ mder -- 浏览器端Markdown文件渲染工具，打开并渲染.md/.markdown/.t
 - 语言：HTML5 + CSS3 + 原生JavaScript（ES6+）
 - Markdown解析：Marked.js（lib/marked.min.js）
 - 语法高亮：Highlight.js（lib/highlight.min.js）+ GitHub风格样式（lib/github.min.css）
+- Mermaid图表渲染：Mermaid（lib/mermaid.min.js）
 - 构建工具：无（纯静态文件，通过 HTTP 服务访问 http://localhost:8888/mder/）
 - 包管理：无（第三方库以压缩文件形式引入）
 
@@ -28,7 +29,7 @@ mder -- 浏览器端Markdown文件渲染工具，打开并渲染.md/.markdown/.t
 2. 优先使用File System Access API（showOpenFilePicker），不支持时降级为传统file input
 3. FileReader读取文件内容为文本（UTF-8）
 4. marked.parse()将Markdown转为HTML
-5. highlight.js在marked的highlight回调中对代码块着色
+5. highlight.js对普通代码块着色，Mermaid对```mermaid代码块二次渲染为图表
 6. 渲染结果插入DOM，显示文件元信息（路径、行数、大小、修改时间）
 7. 保存文件句柄，支持"重新加载"按钮刷新内容
 

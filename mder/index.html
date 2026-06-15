@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23667eea;stop-opacity:1'/%3E%3Cstop offset='100%25' style='stop-color:%23764ba2;stop-opacity:1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='12' fill='url(%23grad)'/%3E%3Cpath d='M30 25 L30 75 L70 75 L70 40 L55 40 L55 25 Z' fill='white' opacity='0.9'/%3E%3Cpath d='M55 25 L70 40 L55 40 Z' fill='white' opacity='0.7'/%3E%3Cpath d='M35 45 L65 45 M35 55 L65 55 M35 65 L50 65' stroke='%23667eea' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
     <script src="lib/marked.min.js"></script>
     <script src="lib/highlight.min.js"></script>
+    <script src="lib/mermaid.min.js"></script>
     <link rel="stylesheet" href="lib/github.min.css">
     <style>
         /* ==========================================================================
@@ -237,6 +238,16 @@
             border: 0;
         }
 
+        .markdown-content .mermaid {
+            text-align: center;
+            background-color: #fff;
+        }
+
+        .markdown-content .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+
         .markdown-content table {
             border-spacing: 0;
             border-collapse: collapse;
@@ -386,17 +397,92 @@
             // 文件大小单位常量
         const BYTES_PER_KB = 1024;
         const BYTES_PER_MB = 1024 * 1024;
+        const markedRenderer = new marked.Renderer();
+        let mermaidInitialized = false;
+        const CODE_LANGUAGE_ALIASES = {
+            cplusplus: 'cpp',
+            csharp: 'csharp',
+            cs: 'csharp',
+            docker: 'dockerfile',
+            dotenv: 'ini',
+            htm: 'xml',
+            html: 'xml',
+            javascript: 'javascript',
+            js: 'javascript',
+            jsx: 'javascript',
+            k8s: 'yaml',
+            kubernetes: 'yaml',
+            md: 'markdown',
+            py: 'python',
+            rs: 'rust',
+            shell: 'bash',
+            sh: 'bash',
+            ts: 'typescript',
+            tsx: 'typescript',
+            vue: 'xml',
+            yml: 'yaml',
+            zsh: 'bash',
+        };
+        const PLAIN_TEXT_LANGUAGES = new Set([
+            'console',
+            'log',
+            'nohighlight',
+            'none',
+            'output',
+            'plain',
+            'plaintext',
+            'text',
+            'txt',
+        ]);
+
+        const escapeHtml = (value) => value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        const resolveCodeLanguage = (language) => {
+            if (!language || PLAIN_TEXT_LANGUAGES.has(language)) {
+                return '';
+            }
+
+            const normalizedLanguage = CODE_LANGUAGE_ALIASES[language] || language;
+            return hljs.getLanguage(normalizedLanguage) ? normalizedLanguage : '';
+        };
+
+        const highlightCode = (code, lang) => {
+            const highlightLanguage = resolveCodeLanguage(lang);
+
+            if (highlightLanguage) {
+                try {
+                    return hljs.highlight(code, { language: highlightLanguage }).value;
+                } catch (err) {}
+            }
+
+            if (lang && PLAIN_TEXT_LANGUAGES.has(lang)) {
+                return escapeHtml(code);
+            }
+
+            return hljs.highlightAuto(code).value;
+        };
+
+        markedRenderer.code = (code, lang) => {
+            const language = (lang || '').trim().split(/\s+/)[0].toLowerCase();
+
+            if (language === 'mermaid') {
+                return `<pre class="mermaid">${escapeHtml(code)}</pre>`;
+            }
+
+            const highlightLanguage = resolveCodeLanguage(language);
+            const codeLanguage = highlightLanguage || language;
+            const languageClass = codeLanguage ? ` language-${escapeHtml(codeLanguage)}` : '';
+            return `<pre><code class="hljs${languageClass}">${highlightCode(code, language)}</code></pre>`;
+        };
 
         // 配置 marked
         marked.setOptions({
-            highlight: (code, lang) => {
-                if (lang && hljs.getLanguage(lang)) {
-                    try {
-                        return hljs.highlight(code, { language: lang }).value;
-                    } catch (err) {} // 静默处理高亮失败，降级为自动检测
-                }
-                return hljs.highlightAuto(code).value;
-            },
+            renderer: markedRenderer,
             breaks: true,
             gfm: true,
             html: false,
@@ -449,12 +535,37 @@
             return `${dateStr} ${timeStr}`;
         };
 
+        const renderMermaidDiagrams = async (container) => {
+            if (!window.mermaid) {
+                return;
+            }
+
+            try {
+                if (!mermaidInitialized) {
+                    window.mermaid.initialize({
+                        startOnLoad: false,
+                        securityLevel: 'strict',
+                    });
+                    mermaidInitialized = true;
+                }
+
+                const nodes = container.querySelectorAll('.mermaid');
+                if (nodes.length > 0) {
+                    await window.mermaid.run({ nodes });
+                }
+            } catch (error) {
+                showError(`渲染 Mermaid 图表时出错：${error.message}`);
+            }
+        };
+
         // 渲染 Markdown
         const renderMarkdown = (content, filePath, fileName, fileHandle = null, lastModified = null) => {
             try {
                 clearError();
                 const html = marked.parse(content);
-                document.getElementById('markdownOutput').innerHTML = html;
+                const markdownOutput = document.getElementById('markdownOutput');
+                markdownOutput.innerHTML = html;
+                renderMermaidDiagrams(markdownOutput);
 
                 // 保存文件句柄和路径信息，用于重新加载
                 currentFileHandle = fileHandle;
