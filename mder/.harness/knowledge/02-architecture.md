@@ -17,11 +17,15 @@ mder采用单文件架构，无传统意义上的分层：
 - 无独立的JavaScript模块文件，所有函数定义在全局作用域
 
 主要函数：
-- renderMarkdown(content, filePath, fileName, fileHandle, lastModified) -- 核心渲染函数
-- readFile(file, fileHandle) -- 读取文件内容并调用渲染
+- renderMarkdown(content, filePath, fileName, fileHandle, lastModified, scrollYToRestore) -- 核心渲染函数（async）
+- readFile(file, fileHandle, scrollYToRestore) -- 读取文件内容并调用渲染
 - openFileWithAPI() -- 通过File System Access API打开文件
 - handleFileSelect(event) -- 传统file input的change事件处理
 - reloadFile() -- 重新加载当前文件
+- restoreLastFile() -- 刷新后恢复上次打开的文件
+- saveFileState / getSavedFileState / clearSavedFileState -- IndexedDB + sessionStorage 持久化
+- saveScrollPosition / getScrollPosition / clearScrollPosition -- 滚动位置持久化
+- throttle / throttledSaveScroll -- 节流工具与滚动保存
 - showError(message) / clearError() -- 错误提示
 - toggleReloadButton(show) -- 控制重新加载按钮显隐
 

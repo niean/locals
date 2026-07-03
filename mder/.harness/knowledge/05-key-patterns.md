@@ -1,4 +1,4 @@
-<!-- SUMMARY: 核心模式：文件API降级策略、Markdown渲染管线、Mermaid二次渲染、错误处理链、重新加载多策略回退 -->
+<!-- SUMMARY: 核心模式：文件API降级策略、Markdown渲染管线、Mermaid二次渲染、错误处理链、重新加载多策略回退、刷新后文件恢复 -->
 # 关键代码模式
 
 项目中反复出现但不易从单个文件推断的模式，供新功能实现时参照。
@@ -46,3 +46,18 @@ reloadFile()按优先级尝试多种方式：
 2. clearError() 在成功操作前清除旧错误
 3. AbortError（用户取消）静默处理，不显示错误
 4. try-catch包裹所有异步操作和DOM操作
+
+## 模式六：刷新后文件恢复
+
+浏览器刷新后恢复上次打开文件的多层降级模式：
+1. 持久化分层：IndexedDB 存 File System Access API 句柄（唯一可行方式），sessionStorage 存滚动位置和文件路径兜底
+2. 页面加载时 restoreLastFile() 优先从 IndexedDB 取句柄
+3. queryPermission 判断权限状态：
+   - granted -> 直接 getFile -> readFile -> 渲染（透传 scrollYToRestore）
+   - prompt -> 显示"恢复上次文件"按钮，用户点击后 requestPermission
+   - denied -> 清除存储，显示空状态
+4. 无句柄降级：从 sessionStorage 取 filePath -> fetch 拉取最新内容
+5. 全部失败：清除存储，显示空状态
+6. 滚动恢复：renderMarkdown 接收 scrollYToRestore 参数，Mermaid 渲染完成后 window.scrollTo
+7. 新打开文件时 clearScrollPosition，避免新文件跳到旧位置
+8. 容错：IndexedDB/sessionStorage 不可用时降级为 no-op，不阻塞核心功能

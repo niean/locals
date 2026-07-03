@@ -371,6 +371,9 @@
                 <button class="header__action-btn is-hidden" id="reloadFileBtn">
                     重新加载
                 </button>
+                <button class="header__action-btn is-hidden" id="restoreFileBtn">
+                    恢复上次文件
+                </button>
                 <button class="header__action-btn" id="openFileBtn">
                     打开文件
                 </button>
@@ -493,6 +496,105 @@
         let currentFilePath = null;
         let currentFileName = null;
 
+        // IndexedDB 持久化层（刷新后恢复用）
+        const DB_NAME = 'mder-db';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'file-state';
+        const STORE_KEY = 'last-file';
+
+        const openDB = () => new Promise((resolve, reject) => {
+            if (!window.indexedDB) {
+                resolve(null);
+                return;
+            }
+            const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME);
+                }
+            };
+        });
+
+        const saveFileState = async (fileHandle, fileName, filePath) => {
+            try {
+                const db = await openDB();
+                if (!db) {
+                    sessionStorage.setItem('mder-file-path', filePath || '');
+                    sessionStorage.setItem('mder-file-name', fileName || '');
+                    return;
+                }
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put({
+                    fileHandle,
+                    fileName,
+                    filePath,
+                    savedAt: Date.now(),
+                }, STORE_KEY);
+                sessionStorage.setItem('mder-file-path', filePath || '');
+                sessionStorage.setItem('mder-file-name', fileName || '');
+            } catch (e) {
+                console.log('saveFileState skipped:', e.message);
+            }
+        };
+
+        const getSavedFileState = async () => {
+            try {
+                const db = await openDB();
+                if (!db) {
+                    const filePath = sessionStorage.getItem('mder-file-path');
+                    const fileName = sessionStorage.getItem('mder-file-name');
+                    return (filePath || fileName) ? { fileHandle: null, fileName, filePath } : null;
+                }
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_NAME, 'readonly');
+                    const req = tx.objectStore(STORE_NAME).get(STORE_KEY);
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => reject(req.error);
+                });
+            } catch (e) {
+                console.log('getSavedFileState skipped:', e.message);
+                return null;
+            }
+        };
+
+        const clearSavedFileState = async () => {
+            try {
+                const db = await openDB();
+                if (db) {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    tx.objectStore(STORE_NAME).delete(STORE_KEY);
+                }
+                sessionStorage.removeItem('mder-file-path');
+                sessionStorage.removeItem('mder-file-name');
+            } catch (e) {
+                console.log('clearSavedFileState skipped:', e.message);
+            }
+        };
+
+        const saveScrollPosition = (scrollY) => {
+            try {
+                sessionStorage.setItem('mder-scroll-y', String(scrollY));
+            } catch (e) {
+                // sessionStorage 不可用时静默
+            }
+        };
+
+        const getScrollPosition = () => {
+            const val = sessionStorage.getItem('mder-scroll-y');
+            return val ? Number(val) : null;
+        };
+
+        const clearScrollPosition = () => {
+            try {
+                sessionStorage.removeItem('mder-scroll-y');
+            } catch (e) {
+                // 静默
+            }
+        };
+
         // 显示错误信息
         const showError = (message) => {
             const errorContainer = document.getElementById('errorContainer');
@@ -511,6 +613,38 @@
                 reloadBtn.classList.toggle('is-hidden', !show);
             }
         };
+
+        // 节流工具
+        const throttle = (fn, wait) => {
+            let lastTime = 0;
+            let timer = null;
+            return (...args) => {
+                const now = Date.now();
+                const remaining = wait - (now - lastTime);
+                if (remaining <= 0) {
+                    if (timer) {
+                        clearTimeout(timer);
+                        timer = null;
+                    }
+                    lastTime = now;
+                    fn(...args);
+                } else if (!timer) {
+                    timer = setTimeout(() => {
+                        lastTime = Date.now();
+                        timer = null;
+                        fn(...args);
+                    }, remaining);
+                }
+            };
+        };
+
+        // 滚动位置保存节流间隔
+        const SCROLL_THROTTLE_MS = 200;
+
+        // 节流保存滚动位置
+        const throttledSaveScroll = throttle(() => {
+            saveScrollPosition(window.scrollY);
+        }, SCROLL_THROTTLE_MS);
 
         // 格式化字节数显示
         const formatBytes = (bytes) => {
@@ -559,18 +693,21 @@
         };
 
         // 渲染 Markdown
-        const renderMarkdown = (content, filePath, fileName, fileHandle = null, lastModified = null) => {
+        const renderMarkdown = async (content, filePath, fileName, fileHandle = null, lastModified = null, scrollYToRestore = null) => {
             try {
                 clearError();
                 const html = marked.parse(content);
                 const markdownOutput = document.getElementById('markdownOutput');
                 markdownOutput.innerHTML = html;
-                renderMermaidDiagrams(markdownOutput);
+                await renderMermaidDiagrams(markdownOutput);
 
                 // 保存文件句柄和路径信息，用于重新加载
                 currentFileHandle = fileHandle;
                 currentFilePath = filePath;
                 currentFileName = fileName;
+
+                // 持久化文件状态，供刷新后恢复
+                await saveFileState(fileHandle, fileName, filePath);
 
                 // 更新文件信息（包含文件路径、行数、字节数、更新时间）
                 const fileInfoEl = document.getElementById('fileInfo');
@@ -586,6 +723,11 @@
                     }
 
                     toggleReloadButton(true);
+
+                    // 恢复滚动位置（仅恢复场景）
+                    if (scrollYToRestore !== null) {
+                        window.scrollTo(0, scrollYToRestore);
+                    }
                 } else {
                     if (fileInfoEl) {
                         fileInfoEl.textContent = '';
@@ -599,13 +741,13 @@
         };
 
         // 读取文件内容
-        const readFile = (file, fileHandle = null) => {
+        const readFile = (file, fileHandle = null, scrollYToRestore = null) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const content = e.target.result;
                 const filePath = file.path || file.webkitRelativePath || file.name;
                 const lastModified = file.lastModified || null;
-                renderMarkdown(content, filePath, file.name, fileHandle, lastModified);
+                renderMarkdown(content, filePath, file.name, fileHandle, lastModified, scrollYToRestore);
             };
             reader.onerror = () => {
                 showError('读取文件失败');
@@ -678,6 +820,83 @@
             }
         };
 
+        // 刷新后恢复上次打开的文件
+        const restoreLastFile = async () => {
+            const savedState = await getSavedFileState();
+            if (!savedState) {
+                return;
+            }
+
+            const { fileHandle, fileName, filePath } = savedState;
+            const scrollY = getScrollPosition();
+
+            // 优先用 File System Access API 句柄恢复
+            if (fileHandle && fileHandle.queryPermission) {
+                try {
+                    const perm = await fileHandle.queryPermission({ mode: 'read' });
+                    if (perm === 'granted') {
+                        try {
+                            const file = await fileHandle.getFile();
+                            readFile(file, fileHandle, scrollY);
+                            return;
+                        } catch (e) {
+                            await clearSavedFileState();
+                            clearScrollPosition();
+                            showError('上次打开的文件已不可用');
+                            return;
+                        }
+                    } else if (perm === 'prompt') {
+                        const restoreBtn = document.getElementById('restoreFileBtn');
+                        if (restoreBtn) {
+                            restoreBtn.classList.remove('is-hidden');
+                            const handleRestoreClick = async () => {
+                                try {
+                                    const reqPerm = await fileHandle.requestPermission({ mode: 'read' });
+                                    if (reqPerm === 'granted') {
+                                        restoreBtn.classList.add('is-hidden');
+                                        restoreBtn.removeEventListener('click', handleRestoreClick);
+                                        const file = await fileHandle.getFile();
+                                        readFile(file, fileHandle, scrollY);
+                                    }
+                                } catch (e) {
+                                    console.error('恢复权限请求失败:', e);
+                                }
+                            };
+                            restoreBtn.addEventListener('click', handleRestoreClick);
+                        }
+                        return;
+                    } else {
+                        // denied
+                        await clearSavedFileState();
+                        clearScrollPosition();
+                        return;
+                    }
+                } catch (e) {
+                    console.log('queryPermission skipped:', e.message);
+                }
+            }
+
+            // 降级：用 sessionStorage 路径 + fetch
+            if (filePath) {
+                try {
+                    const response = await fetch(filePath);
+                    if (response.ok) {
+                        const content = await response.text();
+                        const lastModifiedHeader = response.headers.get('Last-Modified');
+                        const lastModified = lastModifiedHeader ? new Date(lastModifiedHeader).getTime() : null;
+                        await renderMarkdown(content, filePath, fileName, null, lastModified, scrollY);
+                        return;
+                    }
+                } catch (e) {
+                    console.log('fetch fallback failed:', e.message);
+                }
+            }
+
+            // 全部失败，清理
+            await clearSavedFileState();
+            clearScrollPosition();
+        };
+
         // 使用 File System Access API 打开文件
         const openFileWithAPI = async () => {
             if (!window.showOpenFilePicker) {
@@ -685,6 +904,8 @@
                 document.getElementById('fileInput').click();
                 return;
             }
+
+            clearScrollPosition();
 
             try {
                 const [fileHandle] = await window.showOpenFilePicker({
@@ -717,6 +938,7 @@
                     showError('请选择 Markdown 文件（.md, .markdown, .txt）');
                     return;
                 }
+                clearScrollPosition();
                 readFile(file);
             }
         };
@@ -726,6 +948,21 @@
         document.getElementById('openFileBtn').addEventListener('click', openFileWithAPI);
         document.getElementById('fileInput').addEventListener('change', handleFileSelect);
         document.querySelector('.empty-state').addEventListener('click', openFileWithAPI);
+
+        // 页面加载时尝试恢复上次文件
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', restoreLastFile);
+        } else {
+            restoreLastFile();
+        }
+
+        // 滚动时节流保存位置
+        window.addEventListener('scroll', throttledSaveScroll);
+
+        // 页面隐藏时最后保存一次
+        window.addEventListener('pagehide', () => {
+            saveScrollPosition(window.scrollY);
+        });
 
         })();
     </script>

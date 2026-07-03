@@ -125,5 +125,5 @@
 - 文件操作仅通过用户主动选择触发，不自动访问文件系统
 - 禁止使用eval()、Function()构造函数
 - innerHTML仅用于插入marked.js渲染后的HTML（已经过库内部处理）
-- 不在localStorage/sessionStorage/cookie中存储用户数据
-- 不发起网络请求（除非通过fetch重新加载已知路径的文件）
+- 不在localStorage/cookie中存储用户数据；sessionStorage 仅允许存储非敏感应用状态（如滚动位置、文件路径兜底），禁止存储文件内容、凭据等敏感信息
+- 默认不发起网络请求；允许与可选本地辅助后端通信，以及通过fetch重新加载已知路径的文件

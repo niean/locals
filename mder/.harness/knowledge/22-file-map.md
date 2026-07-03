@@ -17,6 +17,21 @@
 | 打开文件（传统方式） | index.html | handleFileSelect() |
 | 读取文件内容 | index.html | readFile() |
 | 重新加载文件 | index.html | reloadFile() |
+| 刷新后恢复上次文件 | index.html | restoreLastFile() |
+
+## 持久化层（刷新恢复）
+
+| 功能 | 文件 | 函数/位置 |
+|------|------|----------|
+| 保存文件状态（句柄+元信息） | index.html | saveFileState() |
+| 读取已保存文件状态 | index.html | getSavedFileState() |
+| 清除文件状态 | index.html | clearSavedFileState() |
+| 保存滚动位置 | index.html | saveScrollPosition() |
+| 读取滚动位置 | index.html | getScrollPosition() |
+| 清除滚动位置 | index.html | clearScrollPosition() |
+| IndexedDB 连接 | index.html | openDB() |
+| 节流工具 | index.html | throttle() |
+| 节流保存滚动 | index.html | throttledSaveScroll() |
 
 ## Markdown渲染
 
@@ -45,4 +60,6 @@
 |------|------|------|
 | marked.js配置 | index.html | script标签顶部 marked.setOptions() |
 | 文件大小常量 | index.html | script标签顶部 BYTES_PER_KB / BYTES_PER_MB |
+| IndexedDB 常量 | index.html | script标签顶部 DB_NAME / DB_VERSION / STORE_NAME / STORE_KEY |
+| 滚动节流常量 | index.html | script标签顶部 SCROLL_THROTTLE_MS |
 | 响应式断点 | index.html | style标签内 @media（紧跟对应组件定义） |
