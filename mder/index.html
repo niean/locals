@@ -239,13 +239,28 @@
         }
 
         .markdown-content .mermaid {
-            text-align: center;
             background-color: #fff;
         }
 
         .markdown-content .mermaid svg {
+            display: block;
             max-width: 100%;
             height: auto;
+        }
+
+        .markdown-content .mermaid.align-left svg {
+            margin-left: 0;
+            margin-right: auto;
+        }
+
+        .markdown-content .mermaid.align-center svg {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .markdown-content .mermaid.align-right svg {
+            margin-left: auto;
+            margin-right: 0;
         }
 
         .markdown-content table {
@@ -474,7 +489,12 @@
             const language = (lang || '').trim().split(/\s+/)[0].toLowerCase();
 
             if (language === 'mermaid') {
-                return `<pre class="mermaid">${escapeHtml(code)}</pre>`;
+                let align = 'left';
+                const match = code.match(/^\s*%%\s*align:\s*(left|center|right)\s*$/im);
+                if (match) {
+                    align = match[1].toLowerCase();
+                }
+                return `<pre class="mermaid align-${align}">${escapeHtml(code)}</pre>`;
             }
 
             const highlightLanguage = resolveCodeLanguage(language);

@@ -29,6 +29,10 @@
 - FR
     - 文件：加载文件后，通过刷新浏览器(如CMD+R)、重新加载文件最新内容，且保持光标垂直位置不变
 
+[20260713]
+- FR
+    - 文件：参考项目/Users/niean/blog/niean.github.io，修改mermaid渲染、支持对齐设置(形如 `%% align: left`)
+
 ---
 
 [待办]
